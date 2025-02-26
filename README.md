@@ -21,8 +21,8 @@ Main Deliverables:
 
 # GitHub
 
-git branch -r # Lista los branches remotos
-git push -u origin main # Genera el origin/main en el remoto
+* git branch -r # Lista los branches remotos
+* git push -u origin main # Genera el origin/main en el remoto
 
 Para hacer commit de los cambios:
 1) Cargar el SOURCE CONTROL con los comentarios del cambio
