@@ -17,3 +17,14 @@ Main Deliverables:
 * Present results and a demo of the model doing predictions in real time using an API
 * Make an UI in which users must complete a form to get the prediction for the demo
 * Everything must be containerized using Docker
+
+
+# GitHub
+
+git branch -r # Lista los branches remotos
+git push -u origin main # Genera el origin/main en el remoto
+
+Para hacer commit de los cambios:
+1) Cargar el SOURCE CONTROL con los comentarios del cambio
+2) Commit
+3) Pull
