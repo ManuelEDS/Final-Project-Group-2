@@ -127,10 +127,13 @@ def m_predict(token: str, form_data: dict):
         def json(self):
             return self._json_data
 
+
+    score = random.random()
+
     # Datos simulados de la API
     mock_result = {
-        "prediction": "Positive",
-        "score": random.random()
+        "prediction": "Es muy posible te hospitalices" if score>.5 else "No contrates el seguro!",
+        "score": score
     }
 
     st.write(f"**Payload:** {form_data}")
