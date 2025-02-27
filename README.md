@@ -21,6 +21,11 @@ Main Deliverables:
 
 # GitHub - Use
 
+* git config --global user.name "Tu Nombre"
+* git config --global user.email "tu@email.com"
+
+* git clone https://github.com/ManuelEDS/Final-Project-Group-2
+
 * git branch -r # Lista los branches remotos
 * git push -u origin main # Genera el origin/main en el remoto
 
