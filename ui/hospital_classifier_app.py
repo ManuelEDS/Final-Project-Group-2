@@ -184,37 +184,57 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Custom CSS to style the button like a link
+st.markdown("""
+    <style>
+    .st-key-btn_register > .stButton > button {
+        background: none !important;
+        border: none !important;
+        color: blue !important;
+        text-decoration: none !important;
+        cursor: pointer !important;
+        font-size: 16px !important;
+        padding: 0 !important;
+    }
+    .stButton > button:hover {
+        color: darkblue !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+
 # Formulario de login/register
 if "token" not in st.session_state:
     st.markdown("## Login")
     username = st.text_input("Username", value="alejandro.miconi@gmail.com")
     password = st.text_input("Password", type="password", value="admin")
 
-
     # Crear dos columnas
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([1, 5])
+
+    name = "Login"
+    token = None
 
     with col1:
-
         if st.button("Login"):
             token = login(username, password)
-            if token:
-                st.session_state.token = token
-                st.success("Login successful!")
-            else:
-                st.error("Login failed. Please check your credentials.")
-
 
     with col2:
 
-        if st.button("Register"):
+        if st.button("I haven't had the pleasure of registering yet!", key="btn_register"):
             token = register(username, password)
-            if token:
-                st.session_state.token = token
-                st.success("Register successful!")
-            else:
-                st.error("Register failed. Please check your credentials.")
+            name = "Register"
 
+    if token == None:
+        pass
+
+    elif token:
+        st.session_state.token = token
+        st.success(f"{name} successful!")
+    
+    else:
+        st.error(f"{name} failed. Please check your credentials.")
 
 
 else:
