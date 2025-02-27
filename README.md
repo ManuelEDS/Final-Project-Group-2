@@ -19,7 +19,7 @@ Main Deliverables:
 * Everything must be containerized using Docker
 
 
-# GitHub - Use
+# Using GitHub
 
 * git config --global user.name "Tu Nombre"
 * git config --global user.email "tu@email.com"
