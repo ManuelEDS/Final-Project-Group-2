@@ -19,7 +19,7 @@ Main Deliverables:
 * Everything must be containerized using Docker
 
 
-# GitHub
+# GitHub - Use
 
 * git branch -r # Lista los branches remotos
 * git push -u origin main # Genera el origin/main en el remoto

@@ -1,3 +1,8 @@
 # Ignore the node_modules directory
 api/
 model/
+.gitignore
+*
+/*
+!/.env
+!/docker-compose.yml
