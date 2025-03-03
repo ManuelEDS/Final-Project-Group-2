@@ -98,7 +98,7 @@ def login(username: str, password: str) -> Optional[str]:
     #  4. Use `requests.post()` to send the API request with the URL, headers,
     #     and data payload.
 
-    #return True 
+    return True 
 
     # TODO: Check the login API (MD) 
     response = requests.post(url, headers=headers, data=payload)
