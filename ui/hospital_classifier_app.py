@@ -24,7 +24,7 @@ def register(username: str, password: str, name: str) -> Optional[str]:
 
     # Steps to Build the `register` Function:
     #  1. Construct the API endpoint URL using `API_BASE_URL` and `/register`.
-    url = f"{API_BASE_URL}/register"
+    url = f"{API_BASE_URL}/user"
 
     #  2. Set up the request headers with `accept: application/json` and
     #     `Content-Type: application/x-www-form-urlencoded`.
@@ -54,12 +54,9 @@ def register(username: str, password: str, name: str) -> Optional[str]:
     response = requests.post(url, headers=headers, data=payload)
 
     #  5. Check if the response status code is `200`.
-    #  6. If successful, extract the token from the JSON response.
-    #  7. Return the token if login is successful, otherwise return `None`.
-    #  8. Test the function with various inputs.
+    #  6. If successful, go login and extract the token from the JSON response.
     if response.status_code == 200:
-        token = response.json()["access_token"]
-        st.success(f"Register successful!")
+        token = login(username, password)
     else:
         token = None
 
@@ -101,7 +98,7 @@ def login(username: str, password: str) -> Optional[str]:
     #  4. Use `requests.post()` to send the API request with the URL, headers,
     #     and data payload.
 
-    return True 
+    #return True 
 
     # TODO: Check the login API (MD) 
     response = requests.post(url, headers=headers, data=payload)
@@ -112,10 +109,8 @@ def login(username: str, password: str) -> Optional[str]:
     #  8. Test the function with various inputs.
     if response.status_code == 200:
         token = response.json()["access_token"]
-        st.success(f"Log in successful!")
     else:
         token = None
-        #st.error(f"Error: {response.json()}")
 
     return token
 
