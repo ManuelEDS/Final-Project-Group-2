@@ -11,7 +11,7 @@ ST_REGISTER = "register"
 ST_TOKEN = "token"
 ST_RESTART = "restart"
 
-def register(username: str, password: str) -> Optional[str]:
+def register(username: str, password: str, name: str) -> Optional[str]:
     """This function calls the register endpoint of the API to create a new user.
 
     Args:
@@ -39,6 +39,7 @@ def register(username: str, password: str) -> Optional[str]:
         "grant_type": "",
         "username": username,
         "password": password,
+        "name": name,
         "scope": "",
         "client_id": "",
         "client_secret": "",
@@ -237,12 +238,12 @@ with placeholder.container():
 
         token = None
         if check_state(ST_NEW_USER): 
-            #name = st.text_input("Name")
+            name = st.text_input("Name")
 
             st.session_state[ST_NEW_USER] = True
 
             if st.button("Register"):
-                token = register(email, password)
+                token = register(email, password, name)
 
         else:
 
