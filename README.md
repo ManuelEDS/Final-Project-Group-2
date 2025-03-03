@@ -34,6 +34,9 @@ Para hacer commit de los cambios:
 2) Commit
 3) Pull
 
+
+## ----------------------------------------
+
 To test the streamlit
 python -m venv env
 .\env\scripts\activate 
