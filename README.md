@@ -33,3 +33,10 @@ Para hacer commit de los cambios:
 1) Cargar el SOURCE CONTROL con los comentarios del cambio
 2) Commit
 3) Pull
+
+To test the streamlit
+python -m venv env
+.\env\scripts\activate 
+pip install -r ./requirements.txt
+
+streamlit run ui/hospital_classifier_app.py

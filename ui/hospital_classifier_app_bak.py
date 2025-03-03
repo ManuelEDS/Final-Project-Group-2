@@ -9,7 +9,6 @@ import random
 ST_NEW_USER = "new_user"
 ST_REGISTER = "register"
 ST_TOKEN = "token"
-ST_RESTART = "restart"
 
 def register(username: str, password: str) -> Optional[str]:
     """This function calls the register endpoint of the API to create a new user.
@@ -134,14 +133,14 @@ def m_predict(token: str, form_data: dict):
 
     # Datos simulados de la API
     mock_result = {
-        "prediction": "You are in fire!" if score>.5 else "No insurance need..",
+        "prediction": "Es muy posible te hospitalices" if score>.5 else "No contrates el seguro!",
         "score": score
     }
 
     st.write(f"**Payload:** {form_data}")
     
     
-    return MockResponse(status_code=200, json_data=mock_result)
+    return MockResponse(status_code=200 if random.random()>.3 else 400, json_data=mock_result)
 
 def predict(token: str, form_data: dict) -> requests.Response:
     """This function calls the predict endpoint of the API to classify the uploaded
@@ -176,15 +175,6 @@ def predict(token: str, form_data: dict) -> requests.Response:
     return response
 
 
-def check_state(state: str, remove: bool = False):
-
-    if state in st.session_state:
-        value = st.session_state[state]
-        if remove: del st.session_state[state]
-        return value 
-
-    return False
-
 # Interfaz de usuario
 #st.set_page_config(page_title="Hospitalization Risks", page_icon="📷🏥")
 st.set_page_config(page_title="Hospitalization Risks", page_icon="✈️")
@@ -213,103 +203,99 @@ st.markdown("""
     """, 
     unsafe_allow_html=True)
 
-
 print("State", st.session_state)
 
-if check_state(ST_RESTART):
-    check_state(ST_TOKEN, True)
-    check_state(ST_NEW_USER, True)
 
-# Create a placeholder
-placeholder = st.empty()
+submit = False
 
-with placeholder.container():
+# Formulario de login/register
+if ST_TOKEN not in st.session_state:
 
-    # Login form
-    if not check_state(ST_TOKEN): 
+    token = None
 
-        label = "Login" if ST_NEW_USER not in st.session_state else "Register"
+    if ST_NEW_USER in st.session_state:
 
-        st.markdown(f"## {label}")
-        email = st.text_input("E-Mail")
-        password = st.text_input("Password", type="password")
+        label = "Register"
 
+        st.markdown("## Registration")
+        email = st.text_input("E-Mail", value="alejandro.miconi@gmail.com")
+        password = st.text_input("Password", type="password", value="admin")
 
-        token = None
-        if check_state(ST_NEW_USER): 
-            #name = st.text_input("Name")
-
-            st.session_state[ST_NEW_USER] = True
-
-            if st.button("Register"):
-                token = register(email, password)
-
-        else:
-
-            col1, col2 = st.columns([1, 5])
-
-            with col1:
-
-                if st.button("Login"):
-                    token = login(email, password)
-                    print("Paso por token")
-                            
-            with col2:
-
-                if st.button("I haven't had the pleasure of registering yet!", key=ST_NEW_USER):
-                    pass
-
-        if token == None:
-            pass
-
-        elif token:
-            st.session_state.email = email if email > "" else "No name"
-            st.session_state.token = token
-            st.success(f"{label} successful!")
-
-        else:
-            st.error(f"{label} failed. Please try again.")
-
-        st.html("</span>")
+        if st.button("Register"):
 
 
+            token = register(email, password)
+            
+            
+            if token == None:
+                pass
 
+            elif token:
+                print("Paso por aca...", token)
+                st.session_state.token = token
+                st.success(f"{label} successful!")
+            
+            else:
+                st.error(f"{label} failed. Please check your credentials.")
+
+            
+            print("Paso...", token)
+
+    else:
+
+        label = "Login"
+
+        st.markdown("## Login")
+        email = st.text_input("E-Mail", value="alejandro.miconi@gmail.com")
+        password = st.text_input("Password", type="password", value="admin")
+
+        # Crear dos columnas
+        col1, col2 = st.columns([1, 5])
+
+        with col1:
+
+            if st.button("Login"):
+                token = login(email, password)
+                        
+        with col2:
+
+            if st.button("I haven't had the pleasure of registering yet!", key=ST_NEW_USER):
+                pass
+
+
+    if token == None:
+        pass
+
+    elif token:
+        print("Paso por aca...", token)
+        st.session_state.token = token
+        st.success(f"{label} successful!")
+    
+    else:
+        st.error(f"{label} failed. Please check your credentials.")
+
+
+else:
+    st.success("You are logged in!")
 
 
 if ST_TOKEN in st.session_state:
-
-    placeholder.empty()  # Clear the placeholder
-    
-    st.success(f"{st.session_state.email}, you are logged in!")
 
     token = st.session_state.token
 
     f_glucosa = st.text_input("Glucosa")
     f_hemoglobina = st.text_input("Hemoglobina")
 
-    col1, col2 = st.columns([1, 5])
+    # Predict button
+    if st.button("Predict"):
 
-    response = False
-    with col1:
+        payload = {
+            "glucosa": f_glucosa, 
+            "hemoglobina": f_hemoglobina
+        }
 
-        # Predict button
-        if st.button("Predict"):
+        response = m_predict(token, payload)
 
-            payload = {
-                "glucosa": f_glucosa, 
-                "hemoglobina": f_hemoglobina
-            }
-
-            response = m_predict(token, payload)
-
-                    
-    with col2:
-
-        if st.button("Re-start", key=ST_RESTART):
-            pass
-
-    if response:
-        
         if response.status_code == 200:
             result = response.json()
             st.write(f"**Prediction:** {result['prediction']}") 
@@ -319,8 +305,6 @@ if ST_TOKEN in st.session_state:
             st.session_state.result = result
         else:
             st.error(f"Error predicting data. Please try again. ({response.status_code})")
-
-
 
     # Pie de página
     st.markdown("<hr style='border:2px solid #4B89DC;'>", unsafe_allow_html=True)

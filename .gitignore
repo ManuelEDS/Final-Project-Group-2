@@ -1,3 +1,4 @@
+env/
 api/
 model/
-ui/env/
+env/*
