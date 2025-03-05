@@ -1,2 +1,12 @@
 streamlit
 pytest
+
+
+
+#------User-----
+argon2-cffi==21.3.0
+argon2-cffi-bindings==21.2.0
+cryptography==38.0.4
+passlib==1.7.4
+python-jose==3.3.0
+itsdangerous==2.1.2
