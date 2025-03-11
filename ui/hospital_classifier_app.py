@@ -11,6 +11,43 @@ ST_REGISTER = "register"
 ST_TOKEN = "token"
 ST_RESTART = "restart"
 
+def get_payload(fields: dict):
+
+    payload = {}
+    with_error = False
+
+    for field in fields:
+
+        if field["type"] == "float" or field["type"] == "int":
+        
+            min = field["min"]
+            max = field["max"]
+
+            value = st.text_input(field["name"])
+            st.markdown(f"Enter a number between {min} and {max}")
+
+            if value:
+                try:
+                    number = float(value)  # Convert input to a number
+                    if min <= number <= max:
+                        st.success("Valid input: {}".format(number))
+                    else:
+                        st.error("Please enter a number between {} and {}.".format(min, max))
+                        with_error = True
+
+                except ValueError:
+                    st.error("Please enter a valid number.")
+
+            else:
+                with_error = True
+
+        elif field["type"] == "options":
+            value = st.selectbox(field["name"], field["options"])
+
+        payload[field["id"]] = value
+
+    return payload , with_error
+
 def register(username: str, password: str, name: str) -> Optional[str]:
     """This function calls the register endpoint of the API to create a new user.
 
@@ -280,8 +317,15 @@ if ST_TOKEN in st.session_state:
 
     token = st.session_state.token
 
-    f_glucosa = st.text_input("Glucosa")
-    f_hemoglobina = st.text_input("Hemoglobina")
+    # prediction form
+    st.markdown("## Prediction Form")
+
+    fields = [
+        { "id": "glucosa", "name": "Glucosa", "type": "float", "min": 0, "max": 500 },
+        { "id": "hemoglobina", "name": "Hemoglobina", "type": "options", "options": ["Si", "No"] }
+    ]
+
+    payload, with_error = get_payload(fields)
 
     col1, col2 = st.columns([1, 5])
 
@@ -290,17 +334,15 @@ if ST_TOKEN in st.session_state:
 
         # Predict button
         if st.button("Predict"):
+            if with_error:
+                pass
 
-            payload = {
-                "glucosa": f_glucosa, 
-                "hemoglobina": f_hemoglobina
-            }
+            else:
+                response = m_predict(token, payload)
 
-            response = m_predict(token, payload)
+        else: with_error = False
 
-                    
     with col2:
-
         if st.button("Re-start", key=ST_RESTART):
             pass
 
@@ -310,12 +352,14 @@ if ST_TOKEN in st.session_state:
             result = response.json()
             st.write(f"**Prediction:** {result['prediction']}") 
             st.write(f"**Score:** {format(result['score'], '.2f')}") 
-            #st.write(f"**Score:** {result['score']}")
             st.session_state.classification_done = True
             st.session_state.result = result
         else:
             st.error(f"Error predicting data. Please try again. ({response.status_code})")
 
+
+    elif with_error:
+        st.error("Please correct the errors before predicting.")
 
 
     # Pie de página

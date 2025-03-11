@@ -42,4 +42,5 @@ python -m venv env
 .\env\scripts\activate 
 pip install -r ./requirements.txt
 
+.\env\scripts\activate 
 streamlit run ui/hospital_classifier_app.py
