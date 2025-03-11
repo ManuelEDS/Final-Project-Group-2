@@ -189,7 +189,7 @@ def get_payload(fields: dict):
     payload = {}
     with_error = False
 
-    print("State In", st.session_state)
+    #print("State In", st.session_state)
 
     for field in fields:
 
@@ -288,7 +288,7 @@ st.markdown("""
     unsafe_allow_html=True)
 
 
-print("State", st.session_state)
+#print("State", st.session_state)
 
 if check_state(ST_RESTART):
     check_state(ST_TOKEN, True)
