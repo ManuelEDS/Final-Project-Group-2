@@ -10,8 +10,12 @@ ST_NEW_USER = "new_user"
 ST_REGISTER = "register"
 ST_TOKEN = "token"
 ST_RESTART = "restart"
-ST_PREDICT = "predict"
-ST_FIRST = "first"
+ST_ERROR = "error"
+
+TYPE_INT = "int"
+TYPE_FLOAT = "float"
+TYPE_OPTIONS = "options"
+
 
 def register(username: str, password: str, name: str) -> Optional[str]:
     """This function calls the register endpoint of the API to create a new user.
@@ -175,6 +179,7 @@ def check_state(state: str, remove: bool = False):
     if state in st.session_state:
         value = st.session_state[state]
         if remove: del st.session_state[state]
+        
         return value 
 
     return False
@@ -184,50 +189,79 @@ def get_payload(fields: dict):
     payload = {}
     with_error = False
 
+    print("State In", st.session_state)
+
     for field in fields:
 
-        if field["type"] == "float" or field["type"] == "int":
-        
-            min = field["min"]
-            max = field["max"]
+        field_error = False
 
-            value = st.text_input(field["name"])
-            st.markdown(f"""
-                <span style="color: #4B89DC; font-size: smaller;">
-                Enter a number between {min} and {max}
-                </span>""", unsafe_allow_html=True)
+        if field["type"] == TYPE_OPTIONS:
+            value = st.selectbox(field["name"], field["options"])
+
+        else:
+        
+            min = field["min"] if "min" in field else None
+            max = field["max"] if "max" in field else None
+
+            if min != None and max != None:
+                message = f"between {min} and {max}"
+            
+            elif min != None:
+                message = f"greater than {min}"
+
+            elif max != None:
+                message = f"less than {max}"
+
+            else:
+                message = ""
+
+            message = f"Enter a number {message}"
+
+            value = st.text_input(field["name"], placeholder=message)
 
             if value:
+
                 try:
                     number = float(value)  # Convert input to a number
                     
                     if field["type"] == "int" and not number.is_integer():
-                        st.error("Please enter a whole number.")
-                        with_error = True                        
-                    
-                    elif not (min <= number <= max):
-                        st.error("Please enter a number between {} and {}.".format(min, max))
-                        with_error = True
+                        message = "Enter a whole number"
+                        field_error = True
+
+                    elif min == None and max == None:
+                        pass
+
+                    elif min == None and not number <= max \
+                        or max == None and not number >= min \
+                        or not (min <= number <= max):
+                        field_error = True
 
                 except ValueError:
-                    st.error("Please enter a valid number.")
+                    message = "Enter a valid number"
+                    field_error = True
+
+            elif not ST_ERROR in st.session_state:
+                pass
 
             else:
-                #st.error("Please enter a valid value.")
-                with_error = True
-
-        elif field["type"] == "options":
-            value = st.selectbox(field["name"], field["options"])
+                message = "Enter a valid number"
+                field_error = True
 
         payload[field["id"]] = value
 
-    return payload , with_error
+        if field_error:
+            st.error(f"{field['name']}: {message}!")
+            with_error = True
+
+
+    st.session_state[ST_ERROR] = with_error
+    return payload
 
 
 
 # Interfaz de usuario
-#st.set_page_config(page_title="Hospitalization Risks", page_icon="📷🏥")
-st.set_page_config(page_title="Hospitalization Risks", page_icon="✈️")
+#st.set_page_config(page_title="Hospitalization Risks", page_icon="📷✈️")
+st.set_page_config(page_title="Hospitalization Risks", page_icon="🏥")
 
 
 st.markdown(
@@ -259,8 +293,7 @@ print("State", st.session_state)
 if check_state(ST_RESTART):
     check_state(ST_TOKEN, True)
     check_state(ST_NEW_USER, True)
-    check_state(ST_PREDICT, True)
-    check_state(ST_FIRST, True)
+    check_state(ST_ERROR, True)
 
 
 # Create a placeholder
@@ -330,11 +363,13 @@ if ST_TOKEN in st.session_state:
     st.markdown("## Prediction Form")
 
     fields = [
-        { "id": "glucosa", "name": "Glucosa", "type": "int", "min": 0, "max": 500 },
-        { "id": "hemoglobina", "name": "Hemoglobina", "type": "options", "options": ["Si", "No"] }
+        { "id": "hemoglobina", "name": "Hemoglobina", "type": TYPE_OPTIONS, "options": ["Si", "No"] },
+        { "id": "hematies", "name": "Hematies", "type": TYPE_INT },
+        { "id": "glucosa", "name": "Glucosa", "type": TYPE_INT, "min": 0, "max": 500 },
     ]
 
-    payload, with_error = get_payload(fields)
+    payload = get_payload(fields)
+
 
     col1, col2 = st.columns([1, 5])
     response = False
@@ -343,20 +378,18 @@ if ST_TOKEN in st.session_state:
         # Predict button
         if st.button("Predict"):
             
-            #st.markdown(f"with_error {with_error}")
-            st.session_state[ST_PREDICT] = True
-
-            if with_error:
+            if check_state(ST_ERROR):
                 pass
 
             else:
                 response = m_predict(token, payload)
 
-        else: with_error = False
-
     with col2:
         if st.button("Re-start", key=ST_RESTART):
             pass
+
+
+    #print("Error", st.session_state[ST_ERROR])
 
     if response:
 
@@ -372,7 +405,7 @@ if ST_TOKEN in st.session_state:
             st.error(f"Error predicting data. Please try again. ({response.status_code})")
 
 
-    elif with_error:
+    elif check_state(ST_ERROR):
         st.error("Please correct the errors before predicting.")
 
 
