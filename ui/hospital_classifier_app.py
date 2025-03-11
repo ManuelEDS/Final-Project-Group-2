@@ -10,43 +10,8 @@ ST_NEW_USER = "new_user"
 ST_REGISTER = "register"
 ST_TOKEN = "token"
 ST_RESTART = "restart"
-
-def get_payload(fields: dict):
-
-    payload = {}
-    with_error = False
-
-    for field in fields:
-
-        if field["type"] == "float" or field["type"] == "int":
-        
-            min = field["min"]
-            max = field["max"]
-
-            value = st.text_input(field["name"])
-            st.markdown(f"Enter a number between {min} and {max}")
-
-            if value:
-                try:
-                    number = float(value)  # Convert input to a number
-                    if min <= number <= max:
-                        st.success("Valid input: {}".format(number))
-                    else:
-                        st.error("Please enter a number between {} and {}.".format(min, max))
-                        with_error = True
-
-                except ValueError:
-                    st.error("Please enter a valid number.")
-
-            else:
-                with_error = True
-
-        elif field["type"] == "options":
-            value = st.selectbox(field["name"], field["options"])
-
-        payload[field["id"]] = value
-
-    return payload , with_error
+ST_PREDICT = "predict"
+ST_FIRST = "first"
 
 def register(username: str, password: str, name: str) -> Optional[str]:
     """This function calls the register endpoint of the API to create a new user.
@@ -171,9 +136,6 @@ def m_predict(token: str, form_data: dict):
         "score": score
     }
 
-    st.write(f"**Payload:** {form_data}")
-    
-    
     return MockResponse(status_code=200, json_data=mock_result)
 
 def predict(token: str, form_data: dict) -> requests.Response:
@@ -208,7 +170,6 @@ def predict(token: str, form_data: dict) -> requests.Response:
     #  4. Return the response.
     return response
 
-
 def check_state(state: str, remove: bool = False):
 
     if state in st.session_state:
@@ -217,6 +178,52 @@ def check_state(state: str, remove: bool = False):
         return value 
 
     return False
+
+def get_payload(fields: dict):
+
+    payload = {}
+    with_error = False
+
+    for field in fields:
+
+        if field["type"] == "float" or field["type"] == "int":
+        
+            min = field["min"]
+            max = field["max"]
+
+            value = st.text_input(field["name"])
+            st.markdown(f"""
+                <span style="color: #4B89DC; font-size: smaller;">
+                Enter a number between {min} and {max}
+                </span>""", unsafe_allow_html=True)
+
+            if value:
+                try:
+                    number = float(value)  # Convert input to a number
+                    
+                    if field["type"] == "int" and not number.is_integer():
+                        st.error("Please enter a whole number.")
+                        with_error = True                        
+                    
+                    elif not (min <= number <= max):
+                        st.error("Please enter a number between {} and {}.".format(min, max))
+                        with_error = True
+
+                except ValueError:
+                    st.error("Please enter a valid number.")
+
+            else:
+                #st.error("Please enter a valid value.")
+                with_error = True
+
+        elif field["type"] == "options":
+            value = st.selectbox(field["name"], field["options"])
+
+        payload[field["id"]] = value
+
+    return payload , with_error
+
+
 
 # Interfaz de usuario
 #st.set_page_config(page_title="Hospitalization Risks", page_icon="📷🏥")
@@ -252,6 +259,9 @@ print("State", st.session_state)
 if check_state(ST_RESTART):
     check_state(ST_TOKEN, True)
     check_state(ST_NEW_USER, True)
+    check_state(ST_PREDICT, True)
+    check_state(ST_FIRST, True)
+
 
 # Create a placeholder
 placeholder = st.empty()
@@ -285,7 +295,6 @@ with placeholder.container():
 
                 if st.button("Login"):
                     token = login(email, password)
-                    print("Paso por token")
                             
             with col2:
 
@@ -321,19 +330,22 @@ if ST_TOKEN in st.session_state:
     st.markdown("## Prediction Form")
 
     fields = [
-        { "id": "glucosa", "name": "Glucosa", "type": "float", "min": 0, "max": 500 },
+        { "id": "glucosa", "name": "Glucosa", "type": "int", "min": 0, "max": 500 },
         { "id": "hemoglobina", "name": "Hemoglobina", "type": "options", "options": ["Si", "No"] }
     ]
 
     payload, with_error = get_payload(fields)
 
     col1, col2 = st.columns([1, 5])
-
     response = False
     with col1:
 
         # Predict button
         if st.button("Predict"):
+            
+            #st.markdown(f"with_error {with_error}")
+            st.session_state[ST_PREDICT] = True
+
             if with_error:
                 pass
 
@@ -347,7 +359,9 @@ if ST_TOKEN in st.session_state:
             pass
 
     if response:
-        
+
+        st.write(f"**Payload:** {payload}")
+
         if response.status_code == 200:
             result = response.json()
             st.write(f"**Prediction:** {result['prediction']}") 
@@ -362,7 +376,7 @@ if ST_TOKEN in st.session_state:
         st.error("Please correct the errors before predicting.")
 
 
-    # Pie de página
+    # Footer
     st.markdown("<hr style='border:2px solid #4B89DC;'>", unsafe_allow_html=True)
     st.markdown(
         "<p style='text-align: center; color: #4B89DC;'>2025 Hospitalization predict App</p>",
