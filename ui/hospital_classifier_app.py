@@ -25,6 +25,7 @@ def register(username: str, password: str, name: str) -> Optional[str]:
     Args:
         username (str): email of the user
         password (str): password of the user
+        name (str): name of the user
 
     Returns:
         Optional[str]: token if registration is successful, None otherwise
@@ -43,7 +44,6 @@ def register(username: str, password: str, name: str) -> Optional[str]:
 
     #  3. Prepare the data payload with fields: `grant_type`, `username`, `password`,
     #     `scope`, `client_id`, and `client_secret`.
-    """
     payload = { 
         "grant_type": "",
         "username": username,
@@ -52,13 +52,6 @@ def register(username: str, password: str, name: str) -> Optional[str]:
         "scope": "",
         "client_id": "",
         "client_secret": "",
-    }
-    """
-
-    payload = { 
-        "name": name,
-        "email": username,
-        "password": password,
     }
 
     #  4. Use `requests.post()` to send the API request with the URL, headers,
