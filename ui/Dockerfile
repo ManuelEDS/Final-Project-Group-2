@@ -16,4 +16,4 @@ FROM base AS test
 RUN ["python3", "-m", "pytest", "-v", "tests"]
 
 FROM base AS build
-CMD streamlit run --server.port 9090 app/image_classifier_app.py
+CMD streamlit run --server.port 9090 image_classifier_app.py
