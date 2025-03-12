@@ -6,12 +6,11 @@ from app.settings import API_BASE_URL
 from PIL import Image
 import random
 
-ST_NEW_USER = "new_user"
-ST_REGISTER = "register"
+ST_LOGIN = "Login"
+ST_REGISTER = "Register"
 ST_TOKEN = "token"
 ST_RESTART = "restart"
 ST_ERROR = "error"
-
 ST_INITIALS = "initials"
 
 TYPE_INT = "int"
@@ -44,6 +43,7 @@ def register(username: str, password: str, name: str) -> Optional[str]:
 
     #  3. Prepare the data payload with fields: `grant_type`, `username`, `password`,
     #     `scope`, `client_id`, and `client_secret`.
+    """
     payload = { 
         "grant_type": "",
         "username": username,
@@ -52,6 +52,13 @@ def register(username: str, password: str, name: str) -> Optional[str]:
         "scope": "",
         "client_id": "",
         "client_secret": "",
+    }
+    """
+
+    payload = { 
+        "name": name,
+        "email": username,
+        "password": password,
     }
 
     #  4. Use `requests.post()` to send the API request with the URL, headers,
@@ -142,9 +149,6 @@ def predict(token: str, form_data: dict) -> requests.Response:
     }
 
     #  3. Make a POST request to the predict endpoint.
-
-    #return { "status_code" : 200 }
-
     # TODO: Check the predict API (MD) 
     url = f"{API_BASE_URL}/model/predict"
     response = requests.post(url, headers=headers, json=form_data)
@@ -252,60 +256,71 @@ st.markdown(
 
 st.write("Version ", VERSION)
 
-# Custom CSS to style the button like a link
-st.markdown("""
-    <style>
-
-    .st-key-new_user > .stButton > button {
-        background: none !important;
-        border: none !important;
-        color: blue !important;
-        text-decoration: none !important;
-        cursor: pointer !important;
-        font-size: 16px !important;
-        padding: 0 !important;
-    }
-
-    </style>
-    """, 
-    unsafe_allow_html=True)
-
-
-#print("State", st.session_state)
-
 if check_state(ST_RESTART):
     check_state(ST_TOKEN, True)
-    check_state(ST_NEW_USER, True)
     check_state(ST_ERROR, True)
     check_state(ST_INITIALS, True)
 
 
 
-# Formulario de login
-if "token" not in st.session_state:
+# Create a placeholder
+placeholder = st.empty()
+with placeholder.container():
 
-    st.markdown("## Login")
-    username = st.text_input("Username", value="admin@example.com")
-    password = st.text_input("Password", type="password", value="admin")
+    # Formulario de login
+    if not check_state(ST_TOKEN):
 
-    if st.button("Login"):
-        token = login(username, password)
-        if token:
-            st.session_state.token = token
-            st.success("Login successful!")
+        if check_state(ST_REGISTER):
+
+            st.markdown(f"## {ST_REGISTER}")
+
+            name = st.text_input("Name")
+            username = st.text_input("E-Mail")
+            password = st.text_input("Password", type="password")
+
+            if st.button("Confirm"):
+                token = register(username, password, name)
+                if token:
+                    st.session_state.token = token
+                    st.success("Register successful!")
+                else:
+                    st.error("Register failed. Please check your credentials.")
+
         else:
-            st.error("Login failed. Please check your credentials.")
-else:
-    st.success("You are logged in!")
 
+            st.markdown("## Login")
+            username = st.text_input("E-Mail", value="admin@example.com")
+            password = st.text_input("Password", type="password", value="admin")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+
+                if st.button("Login"):
+                    token = login(username, password)
+                    if token:
+                        st.session_state.token = token
+                        st.success("Login successful!")
+                    else:
+                        st.error("Login failed. Please check your credentials.")
+
+            with col2:
+                if st.button(ST_REGISTER):
+                    st.session_state[ST_REGISTER] = True
+                    st.rerun()  # Reinicia la app
+
+#---------------------------------------------------------------------------------------------------------------
 if not check_state(ST_INITIALS):
     st.session_state[ST_INITIALS] = [random.randint(0, 500) for _ in range(50)]
 
 if ST_TOKEN in st.session_state:
 
+    placeholder.empty()  # Clear the placeholder
+
     st.success(f"You are logged in!")
 
     token = st.session_state.token
+
 
     # prediction form
     st.markdown("## Prediction Form")
