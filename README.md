@@ -40,9 +40,7 @@ git remote add origin https://github.com/ManuelEDS/Final-Project-Group-2/
 git remote -v # Para verificar la conexión al repo remoto
 git pull origin main # Combina git fetch y git merge
 
-## ----------------------------------------
-
-To test the streamlit
+## Testing ----------------------------------------
 python -m venv env
 .\env\scripts\activate 
 pip install -r ./requirements.txt
@@ -51,9 +49,7 @@ pip install -r ./requirements.txt
 streamlit run ui/hospital_classifier_app.py
 
 
-## ----------------------------------------
-# Docker
-
+# Docker ----------------------------------------
 
 ## Instalación
 
