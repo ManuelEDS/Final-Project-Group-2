@@ -22,8 +22,9 @@ except redis.ConnectionError:
     print("Failed to connect to Redis.")
 # db = None
 
-async def model_predict(image_name):
-    print(f"Processing image {image_name}...")
+async def model_predict(data):
+
+    print(f"Processing model_predict {data}, type {type(data)}...")
     """
     Receives an image name and queues the job into Redis.
     Will loop until getting the answer from our ML service.
@@ -52,7 +53,7 @@ async def model_predict(image_name):
     # Create the job data
     job_data = {
         "id": job_id,
-        "image_name": image_name
+        "features": data
     }
 
     # Add the job to the Redis queue
@@ -67,30 +68,5 @@ async def model_predict(image_name):
             score = result["score"]
             break
         time.sleep(settings.API_SLEEP)
+
     return prediction, score
-
-    # job_id = None
-
-    # Create a dict with the job data we will send through Redis having the
-    # following shape:
-    # {
-    #    "id": str,
-    #    "image_name": str,
-    # }
-
-    # job_data = {"id": None, "image_name": None}
-
-    # Loop until we received the response from our ML model
-
-    #    output = None
-
-        # Check if the text was correctly processed by our ML model
-        # Don't modify the code below, it should work as expected
-        #if output is not None:
-        #    output = json.loads(output.decode("utf-8"))
-        #    prediction = output["prediction"]
-        #    score = output["score"]
-        #    db.delete(job_id)
-        #    break
-
-        # Sleep some time waiting for model results
