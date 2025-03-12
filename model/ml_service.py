@@ -1,23 +1,19 @@
-import os
 import json
-import joblib
-import redis
+import os
 import time
+
 import lightgbm as lgb
-from lightgbm import LGBMClassifier
+import pandas as pd
+import redis
 import settings
 
 db = redis.StrictRedis(host=settings.REDIS_IP, port=settings.REDIS_PORT, db=0)
 
-loaded_model = lgb.Booster(model_file='lgbm_model.pkl')
-
-
 # ======== LOAD ARTIFACTS ========
 # Use relative path to load the pickle model
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'lgbm_model.pkl')
-model = joblib.load(MODEL_PATH)
+loaded_model = lgb.Booster(model_file=MODEL_PATH)
 
-# (Optional) If you have top_features, scalers, etc.:
 # TOP_FEATURES_PATH = os.path.join(os.path.dirname(__file__), 'top_features.pkl')
 # top_features = joblib.load(TOP_FEATURES_PATH)
 
@@ -31,22 +27,13 @@ def predict(json_str):
     X_df= pd.DataFrame([input_dict])
     predictions = loaded_model.predict(X_df)
     # Example threshold of 0.3
-    y_prods = lgbm_model.predict_proba(X_df)[:, 1]
+    y_prods = loaded_model.predict_proba(X_df)[:, 1]
     y_pred = (y_prods > 0.3).astype(int) 
     return {
         'prediction': y_pred,
         'probability': float(predictions[0])
     }
 
-
-
-# ======== REDIS LISTENER (Optional) ========
-import json
-import time
-import settings
-import pandas as pd
-from your_ml_module import predict  # your predict() function
-# 'loaded_model' is presumably imported or accessible inside predict()
 
 def classify_process():
     """
