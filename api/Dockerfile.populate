@@ -1,4 +1,4 @@
-#FROM python:3.8.13
+FROM python:3.8.13
 
 # TODO - add all the necessary to run the script populate_db.py in this image
 # 1. Copy the requirements.txt file to the image
@@ -6,23 +6,20 @@
 # 3. Copy the content of the current directory to the image
 # 4. Run the populate_db.py script
 
-FROM python:3.8.13 as base
+WORKDIR /api
 
-# Set the PYTHONPATH environment variable
-ENV PYTHONPATH=$PYTHONPATH:/src/
+# Install dependencies
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-# Copy the requirements.txt file to the image
-COPY ./requirements.txt /src/requirements.txt
+# Copy app code
+COPY . .
 
-# Set the working directory
-WORKDIR /src
+# Run populate_db.py
 
-# Install the dependencies
-RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy the content of the current directory to the image
-COPY ./ /src/
+CMD ["python3" , "populate_db.py"]
 
-# Run the populate_db.py script
-CMD ["python", "populate_db.py"]
+# CMD gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 populate_db:app
 
+# RUN python populate_db.py

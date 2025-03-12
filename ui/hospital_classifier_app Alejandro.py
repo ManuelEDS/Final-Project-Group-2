@@ -1,5 +1,5 @@
 from typing import Optional
-import json
+
 import requests
 import streamlit as st
 from app.settings import API_BASE_URL
@@ -18,7 +18,6 @@ TYPE_INT = "int"
 TYPE_FLOAT = "float"
 TYPE_OPTIONS = "options"
 
-VERSION = "1.2"
 
 def register(username: str, password: str, name: str) -> Optional[str]:
     """This function calls the register endpoint of the API to create a new user.
@@ -56,6 +55,8 @@ def register(username: str, password: str, name: str) -> Optional[str]:
 
     #  4. Use `requests.post()` to send the API request with the URL, headers,
     #     and data payload.
+
+    return True
 
     # TODO: Check the register API (MD) 
     response = requests.post(url, headers=headers, data=payload)
@@ -105,6 +106,8 @@ def login(username: str, password: str) -> Optional[str]:
     #  4. Use `requests.post()` to send the API request with the URL, headers,
     #     and data payload.
 
+    return True 
+
     # TODO: Check the login API (MD) 
     response = requests.post(url, headers=headers, data=payload)
 
@@ -118,6 +121,28 @@ def login(username: str, password: str) -> Optional[str]:
         token = None
 
     return token
+
+def m_predict(token: str, form_data: dict):
+
+    # Simular la respuesta de la API
+    class MockResponse:
+        def __init__(self, status_code, json_data):
+            self.status_code = status_code
+            self._json_data = json_data
+
+        def json(self):
+            return self._json_data
+
+
+    score = random.random()
+
+    # Datos simulados de la API
+    mock_result = {
+        "prediction": "You are in fire!" if score>.5 else "No insurance need..",
+        "score": score
+    }
+
+    return MockResponse(status_code=200, json_data=mock_result)
 
 def predict(token: str, form_data: dict) -> requests.Response:
     """This function calls the predict endpoint of the API to classify the uploaded
@@ -136,18 +161,17 @@ def predict(token: str, form_data: dict) -> requests.Response:
     #     tuple with the file name and the file content.
 
     #  2. Add the token to the headers.
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Authorization": f"Bearer {token}"}
 
     #  3. Make a POST request to the predict endpoint.
 
-    #return { "status_code" : 200 }
+    return {
+        "status_code" : 200,
+    }
 
     # TODO: Check the predict API (MD) 
     url = f"{API_BASE_URL}/model/predict"
-    response = requests.post(url, headers=headers, json=form_data)
+    response = requests.post(url, headers=headers, data=form_data)
 
     #  4. Return the response.
     return response
@@ -246,11 +270,9 @@ st.set_page_config(page_title="Hospitalization Risks", page_icon="🏥")
 
 
 st.markdown(
-    f"<h1 style='text-align: center; color: #4B89DC;'>Hospitalization Risks</h1>",
+    "<h1 style='text-align: center; color: #4B89DC;'>Hospitalization Risks</h1>",
     unsafe_allow_html=True,
 )
-
-st.write("Version ", VERSION)
 
 # Custom CSS to style the button like a link
 st.markdown("""
@@ -279,31 +301,66 @@ if check_state(ST_RESTART):
     check_state(ST_ERROR, True)
     check_state(ST_INITIALS, True)
 
+# Create a placeholder
+placeholder = st.empty()
+
+with placeholder.container():
+
+    # Login form
+    if not check_state(ST_TOKEN): 
+
+        label = "Login" if ST_NEW_USER not in st.session_state else "Register"
+
+        st.markdown(f"## {label}")
+        email = st.text_input("E-Mail")
+        password = st.text_input("Password", type="password")
 
 
-# Formulario de login
-if "token" not in st.session_state:
+        token = None
+        if check_state(ST_NEW_USER): 
+            name = st.text_input("Name")
 
-    st.markdown("## Login")
-    username = st.text_input("Username", value="admin@example.com")
-    password = st.text_input("Password", type="password", value="admin")
+            st.session_state[ST_NEW_USER] = True
 
-    if st.button("Login"):
-        token = login(username, password)
-        if token:
-            st.session_state.token = token
-            st.success("Login successful!")
+            if st.button("Register"):
+                token = register(email, password, name)
+
         else:
-            st.error("Login failed. Please check your credentials.")
-else:
-    st.success("You are logged in!")
+
+            col1, col2 = st.columns([1, 5])
+
+            with col1:
+
+                if st.button("Login"):
+                    token = login(email, password)
+                            
+            with col2:
+
+                if st.button("I haven't had the pleasure of registering yet!", key=ST_NEW_USER):
+                    pass
+
+        if token == None:
+            pass
+
+        elif token:
+            st.session_state.email = email if email > "" else "No name"
+            st.session_state.token = token
+            st.success(f"{label} successful!")
+
+        else:
+            st.error(f"{label} failed. Please try again.")
+
+        st.html("</span>")
+
 
 if not check_state(ST_INITIALS):
     st.session_state[ST_INITIALS] = [random.randint(0, 500) for _ in range(50)]
 
 if ST_TOKEN in st.session_state:
 
-    st.success(f"You are logged in!")
+    placeholder.empty()  # Clear the placeholder
+    
+    st.success(f"{st.session_state.email}, you are logged in!")
 
     token = st.session_state.token
 
@@ -334,14 +391,23 @@ if ST_TOKEN in st.session_state:
 
         # Predict button
         if st.button("Predict"):
-            response = predict(token, payload)
+            
+            if check_state(ST_ERROR):
+                pass
+
+            else:
+                response = m_predict(token, payload)
 
     with col2:
         if st.button("Re-start", key=ST_RESTART):
             pass
 
 
+    #print("Error", st.session_state[ST_ERROR])
+
     if response:
+
+        #st.write(f"**Payload:** {payload}")
 
         if response.status_code == 200:
             result = response.json()
