@@ -12,6 +12,8 @@ ST_TOKEN = "token"
 ST_RESTART = "restart"
 ST_ERROR = "error"
 
+ST_INITIALS = "initials"
+
 TYPE_INT = "int"
 TYPE_FLOAT = "float"
 TYPE_OPTIONS = "options"
@@ -196,10 +198,13 @@ def get_payload(fields: dict):
         field_error = False
 
         if field["type"] == TYPE_OPTIONS:
-            value = st.selectbox(field["name"], field["options"])
+            initial = field["value"] if "value" in field else ""
+            value = st.selectbox(field["name"], field["options"], value=initial)
 
         else:
         
+            initial = field["value"] if "value" in field else 0
+
             min = field["min"] if "min" in field else None
             max = field["max"] if "max" in field else None
 
@@ -217,7 +222,7 @@ def get_payload(fields: dict):
 
             message = f"Enter a number {message}"
 
-            value = st.text_input(field["name"], placeholder=message)
+            value = st.text_input(field["name"], placeholder=message, value=initial)
 
             if value:
 
@@ -294,7 +299,7 @@ if check_state(ST_RESTART):
     check_state(ST_TOKEN, True)
     check_state(ST_NEW_USER, True)
     check_state(ST_ERROR, True)
-
+    check_state(ST_INITIALS, True)
 
 # Create a placeholder
 placeholder = st.empty()
@@ -348,8 +353,8 @@ with placeholder.container():
         st.html("</span>")
 
 
-
-
+if not check_state(ST_INITIALS):
+    st.session_state[ST_INITIALS] = [random.randint(0, 500) for _ in range(50)]
 
 if ST_TOKEN in st.session_state:
 
@@ -362,11 +367,20 @@ if ST_TOKEN in st.session_state:
     # prediction form
     st.markdown("## Prediction Form")
 
-    fields = [
-        { "id": "hemoglobina", "name": "Hemoglobina", "type": TYPE_OPTIONS, "options": ["Si", "No"] },
-        { "id": "hematies", "name": "Hematies", "type": TYPE_INT },
-        { "id": "glucosa", "name": "Glucosa", "type": TYPE_INT, "min": 0, "max": 500 },
-    ]
+    # d = { "0" : 12937 , "1" : 12938 .... "49" : 18877 }
+
+    
+    # fields = [
+    #    { "id": "hemoglobina", "name": "Hemoglobina", "type": TYPE_OPTIONS, "options": ["Si", "No"] },
+    #    { "id": "hematies", "name": "Hematies", "type": TYPE_INT },
+    #    { "id": "glucosa", "name": "Glucosa", "type": TYPE_INT, "min": 0, "max": 500 },
+    #]
+
+
+    fields = []
+    for i in range(50):
+         fields.append({ "id": str(i), "name": f"Field {i}", "type": TYPE_INT, "min": 0, "max": 500, 
+                            "value" : st.session_state[ST_INITIALS][i] })
 
     payload = get_payload(fields)
 
@@ -393,7 +407,7 @@ if ST_TOKEN in st.session_state:
 
     if response:
 
-        st.write(f"**Payload:** {payload}")
+        #st.write(f"**Payload:** {payload}")
 
         if response.status_code == 200:
             result = response.json()
