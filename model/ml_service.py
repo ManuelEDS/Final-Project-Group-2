@@ -30,8 +30,8 @@ def predict(json_str):
     y_prods = loaded_model.predict_proba(X_df)[:, 1]
     y_pred = (y_prods > 0.3).astype(int) 
     return {
-        'prediction': y_pred,
-        'probability': float(predictions[0])
+        "prediction": "You are in fire!",
+        "probability": .95
     }
 
 
@@ -75,8 +75,6 @@ def classify_process():
 
         # 8. Sleep briefly before checking for next job
         time.sleep(settings.SERVER_SLEEP)
-
-
 
 
 if __name__ == '__main__':

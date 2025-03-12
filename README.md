@@ -34,13 +34,42 @@ Para hacer commit de los cambios:
 2) Commit
 3) Pull
 
+Cuando parto del repositorio, desde el directorio inicial...
+git init
+git remote add origin https://github.com/ManuelEDS/Final-Project-Group-2/
+git remote -v # Para verificar la conexión al repo remoto
+git pull origin main # Combina git fetch y git merge
 
-## ----------------------------------------
-
-To test the streamlit
+## Testing ----------------------------------------
 python -m venv env
 .\env\scripts\activate 
 pip install -r ./requirements.txt
 
 .\env\scripts\activate 
 streamlit run ui/hospital_classifier_app.py
+
+
+# Docker ----------------------------------------
+
+## Instalación
+
+/
+docker network prune # Eliminé network anteriores
+docker network create shared_network
+docker-compose up --build -d
+
+/api # No debiera estar nada abajo porque necesita "db"
+docker-compose up # Esto me mostro la generación de la base de datos!
+
+/
+docker-compose up
+
+
+## Database
+psql -U postgres -d sp3
+\l : lista las bases de datos
+\dt : lista las tablas
+\c <database-name> : swith to db
+
+
+
