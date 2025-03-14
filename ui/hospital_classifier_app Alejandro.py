@@ -1,23 +1,23 @@
 from typing import Optional
-import json
+
 import requests
 import streamlit as st
 from app.settings import API_BASE_URL
 from PIL import Image
 import random
 
-ST_LOGIN = "Login"
-ST_REGISTER = "Register"
+ST_NEW_USER = "new_user"
+ST_REGISTER = "register"
 ST_TOKEN = "token"
 ST_RESTART = "restart"
 ST_ERROR = "error"
+
 ST_INITIALS = "initials"
 
 TYPE_INT = "int"
 TYPE_FLOAT = "float"
 TYPE_OPTIONS = "options"
 
-VERSION = "1.2"
 
 def register(username: str, password: str, name: str) -> Optional[str]:
     """This function calls the register endpoint of the API to create a new user.
@@ -25,7 +25,6 @@ def register(username: str, password: str, name: str) -> Optional[str]:
     Args:
         username (str): email of the user
         password (str): password of the user
-        name (str): name of the user
 
     Returns:
         Optional[str]: token if registration is successful, None otherwise
@@ -56,6 +55,8 @@ def register(username: str, password: str, name: str) -> Optional[str]:
 
     #  4. Use `requests.post()` to send the API request with the URL, headers,
     #     and data payload.
+
+    return True
 
     # TODO: Check the register API (MD) 
     response = requests.post(url, headers=headers, data=payload)
@@ -105,6 +106,8 @@ def login(username: str, password: str) -> Optional[str]:
     #  4. Use `requests.post()` to send the API request with the URL, headers,
     #     and data payload.
 
+    return True 
+
     # TODO: Check the login API (MD) 
     response = requests.post(url, headers=headers, data=payload)
 
@@ -118,6 +121,28 @@ def login(username: str, password: str) -> Optional[str]:
         token = None
 
     return token
+
+def m_predict(token: str, form_data: dict):
+
+    # Simular la respuesta de la API
+    class MockResponse:
+        def __init__(self, status_code, json_data):
+            self.status_code = status_code
+            self._json_data = json_data
+
+        def json(self):
+            return self._json_data
+
+
+    score = random.random()
+
+    # Datos simulados de la API
+    mock_result = {
+        "prediction": "You are in fire!" if score>.5 else "No insurance need..",
+        "score": score
+    }
+
+    return MockResponse(status_code=200, json_data=mock_result)
 
 def predict(token: str, form_data: dict) -> requests.Response:
     """This function calls the predict endpoint of the API to classify the uploaded
@@ -136,10 +161,7 @@ def predict(token: str, form_data: dict) -> requests.Response:
     #     tuple with the file name and the file content.
 
     #  2. Add the token to the headers.
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Authorization": f"Bearer {token}"}
 
     #  3. Make a POST request to the predict endpoint.
 
@@ -149,7 +171,7 @@ def predict(token: str, form_data: dict) -> requests.Response:
 
     # TODO: Check the predict API (MD) 
     url = f"{API_BASE_URL}/model/predict"
-    response = requests.post(url, headers=headers, json=form_data)
+    response = requests.post(url, headers=headers, data=form_data)
 
     #  4. Return the response.
     return response
@@ -248,16 +270,34 @@ st.set_page_config(page_title="Hospitalization Risks", page_icon="🏥")
 
 
 st.markdown(
-    f"<h1 style='text-align: center; color: #4B89DC;'>Hospitalization Risks</h1>",
+    "<h1 style='text-align: center; color: #4B89DC;'>Hospitalization Risks</h1>",
     unsafe_allow_html=True,
 )
 
-st.write("Version ", VERSION)
+# Custom CSS to style the button like a link
+st.markdown("""
+    <style>
 
-st.write("Version ", VERSION)
+    .st-key-new_user > .stButton > button {
+        background: none !important;
+        border: none !important;
+        color: blue !important;
+        text-decoration: none !important;
+        cursor: pointer !important;
+        font-size: 16px !important;
+        padding: 0 !important;
+    }
+
+    </style>
+    """, 
+    unsafe_allow_html=True)
+
+
+#print("State", st.session_state)
 
 if check_state(ST_RESTART):
     check_state(ST_TOKEN, True)
+    check_state(ST_NEW_USER, True)
     check_state(ST_ERROR, True)
     check_state(ST_INITIALS, True)
 
@@ -324,7 +364,6 @@ if ST_TOKEN in st.session_state:
 
     token = st.session_state.token
 
-
     # prediction form
     st.markdown("## Prediction Form")
 
@@ -352,14 +391,23 @@ if ST_TOKEN in st.session_state:
 
         # Predict button
         if st.button("Predict"):
-            response = predict(token, payload)
+            
+            if check_state(ST_ERROR):
+                pass
+
+            else:
+                response = m_predict(token, payload)
 
     with col2:
         if st.button("Re-start", key=ST_RESTART):
             pass
 
 
+    #print("Error", st.session_state[ST_ERROR])
+
     if response:
+
+        #st.write(f"**Payload:** {payload}")
 
         if response.status_code == 200:
             result = response.json()

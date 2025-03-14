@@ -1,4 +1,3 @@
-# xx Tuve que cambiar los 'as' por 'AS' y el PYTHONPATH
 FROM python:3.8.13 AS base
 
 ARG PYTHONPATH
