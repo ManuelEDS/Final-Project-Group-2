@@ -1,4 +1,3 @@
-import os
 import json
 import joblib
 import redis
@@ -18,7 +17,6 @@ db = redis.StrictRedis(host=settings.REDIS_IP, port=settings.REDIS_PORT, db=0)
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'lgbm_model.pkl')
 model = joblib.load(MODEL_PATH)
 
-# (Optional) If you have top_features, scalers, etc.:
 # TOP_FEATURES_PATH = os.path.join(os.path.dirname(__file__), 'top_features.pkl')
 # top_features = joblib.load(TOP_FEATURES_PATH)
 
