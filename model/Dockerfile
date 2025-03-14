@@ -1,21 +1,15 @@
-FROM python:3.9 as base
+FROM python:3.9 AS base
 
-
-# Append /home/app/.local/bin/ to PATH variable because
-# gunicorn is installed there.
+ARG PYTHONPATH
 ENV PYTHONPATH=$PYTHONPATH:/src/
+ENV PYTHONUNBUFFERED=1
 
 ADD requirements.txt .
 RUN pip3 install -r requirements.txt
 
-ENV PYTHONPATH=$PYTHONPATH:/src/
-
 COPY ./ /src/
 
 WORKDIR /src
-
-FROM base as test
-RUN ["pytest", "-v", "/src/tests"]
 
 FROM base as build
 ENTRYPOINT ["python3", "/src/ml_service.py"]

@@ -1,3 +1,4 @@
 env/
+model_bak/
 .env
 app Backend
