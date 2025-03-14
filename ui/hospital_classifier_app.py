@@ -142,11 +142,6 @@ def predict(token: str, form_data: dict) -> requests.Response:
     }
 
     #  3. Make a POST request to the predict endpoint.
-
-    return {
-        "status_code" : 200,
-    }
-
     # TODO: Check the predict API (MD) 
     url = f"{API_BASE_URL}/model/predict"
     response = requests.post(url, headers=headers, json=form_data)
@@ -254,73 +249,68 @@ st.markdown(
 
 st.write("Version ", VERSION)
 
-st.write("Version ", VERSION)
-
 if check_state(ST_RESTART):
     check_state(ST_TOKEN, True)
     check_state(ST_ERROR, True)
     check_state(ST_INITIALS, True)
 
+
+
 # Create a placeholder
 placeholder = st.empty()
-
 with placeholder.container():
 
-    # Login form
-    if not check_state(ST_TOKEN): 
+    # Formulario de login
+    if not check_state(ST_TOKEN):
 
-        label = "Login" if ST_NEW_USER not in st.session_state else "Register"
+        if check_state(ST_REGISTER):
 
-        st.markdown(f"## {label}")
-        email = st.text_input("E-Mail")
-        password = st.text_input("Password", type="password")
+            st.markdown(f"## {ST_REGISTER}")
 
-
-        token = None
-        if check_state(ST_NEW_USER): 
             name = st.text_input("Name")
+            username = st.text_input("E-Mail")
+            password = st.text_input("Password", type="password")
 
-            st.session_state[ST_NEW_USER] = True
-
-            if st.button("Register"):
-                token = register(email, password, name)
+            if st.button("Confirm"):
+                token = register(username, password, name)
+                if token:
+                    st.session_state.token = token
+                    st.success("Register successful!")
+                else:
+                    st.error("Register failed. Please check your credentials.")
 
         else:
 
-            col1, col2 = st.columns([1, 5])
+            st.markdown("## Login")
+            username = st.text_input("E-Mail", value="admin@example.com")
+            password = st.text_input("Password", type="password", value="admin")
+
+            col1, col2 = st.columns(2)
 
             with col1:
 
                 if st.button("Login"):
-                    token = login(email, password)
-                            
+                    token = login(username, password)
+                    if token:
+                        st.session_state.token = token
+                        st.success("Login successful!")
+                    else:
+                        st.error("Login failed. Please check your credentials.")
+
             with col2:
+                if st.button(ST_REGISTER):
+                    st.session_state[ST_REGISTER] = True
+                    st.rerun()  # Reinicia la app
 
-                if st.button("I haven't had the pleasure of registering yet!", key=ST_NEW_USER):
-                    pass
-
-        if token == None:
-            pass
-
-        elif token:
-            st.session_state.email = email if email > "" else "No name"
-            st.session_state.token = token
-            st.success(f"{label} successful!")
-
-        else:
-            st.error(f"{label} failed. Please try again.")
-
-        st.html("</span>")
-
-
+#---------------------------------------------------------------------------------------------------------------
 if not check_state(ST_INITIALS):
     st.session_state[ST_INITIALS] = [random.randint(0, 500) for _ in range(50)]
 
 if ST_TOKEN in st.session_state:
 
     placeholder.empty()  # Clear the placeholder
-    
-    st.success(f"{st.session_state.email}, you are logged in!")
+
+    st.success(f"You are logged in!")
 
     token = st.session_state.token
 
