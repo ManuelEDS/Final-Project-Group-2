@@ -1,4 +1,4 @@
-#FROM python:3.8.13
+FROM python:3.8.13
 
 # TODO - add all the necessary to run the script populate_db.py in this image
 # 1. Copy the requirements.txt file to the image
