@@ -9,7 +9,9 @@ import settings
 
 db = redis.StrictRedis(host=settings.REDIS_IP, port=settings.REDIS_PORT, db=0)
 
-loaded_model = lgb.Booster(model_file='lgbm_model.pkl')
+# loaded_model = joblib.load('lgbm_model.pkl')
+# loaded_model = lgb.Booster(model_file='lgbm_model.pkl') 
+# lgb.Booster(model_file='lgbm_model.pkl')
 
 
 # ======== LOAD ARTIFACTS ========
@@ -23,21 +25,34 @@ model = joblib.load(MODEL_PATH)
 
 
 # ======== PREDICTION FUNCTION ========
-def predict(json_str):
+def predict(str):
     """
     Runs inference using the loaded model. Returns a dict with the prediction result.
     """
-    input_dict = json.loads(json_str)
+    # Convert input string to a dictionary
+    fields = json.loads(str)
+
+    def get_number(value):
+        try:
+            return float(value)
+        except ValueError:
+            return value
+
+    input_dict = { k: get_number(v) for k, v in fields.items()}
+
+    print(f"Input dict {type(input_dict)}: {input_dict}")
+
+    # Convert input_dict to a DataFrame
     X_df= pd.DataFrame([input_dict])
-    predictions = loaded_model.predict(X_df)
+
+    predictions = model.predict(X_df)
     # Example threshold of 0.3
-    y_prods = lgbm_model.predict_proba(X_df)[:, 1]
+    y_prods = model.predict_proba(X_df)[:, 1]
     y_pred = (y_prods > 0.3).astype(int) 
     return {
-        'prediction': y_pred,
+        'prediction': int(y_pred[0]),
         'probability': float(predictions[0])
     }
-
 
 
 # ======== REDIS LISTENER (Optional) ========
@@ -45,7 +60,7 @@ import json
 import time
 import settings
 import pandas as pd
-from your_ml_module import predict  # your predict() function
+# from your_ml_module import predict  # your predict() function
 # 'loaded_model' is presumably imported or accessible inside predict()
 
 def classify_process():
@@ -74,7 +89,9 @@ def classify_process():
         # 5. Run the loaded ML model using your predict() function
         #    NOTE: Make sure your predict() references input_df instead of X_test 
         #    for predict_proba if you want real-time inference.
-        result = predict(input_features_json)  
+        result = predict(input_features_json) 
+
+        print(f"Job ID {job_id}: {result}") 
         # result should look like {"prediction": <0/1>, "probability": <float>}
 
         # 6. Prepare a new JSON with the results

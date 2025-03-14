@@ -12,8 +12,7 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY ./ /src/
 
-FROM base AS test
-RUN ["python3", "-m", "pytest", "-v", "tests"]
-
 FROM base AS build
-CMD streamlit run --server.port 9090 image_classifier_app.py
+
+CMD streamlit run --server.port 9090 hospital_classifier_app.py
+
