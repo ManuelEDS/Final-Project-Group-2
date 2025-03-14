@@ -1,21 +1,25 @@
+import os
 import json
+import joblib
 import redis
 import time
-#import joblib
-#import lightgbm as lgb
-#from lightgbm import LGBMClassifier
+import lightgbm as lgb
+from lightgbm import LGBMClassifier
 import settings
 
 db = redis.StrictRedis(host=settings.REDIS_IP, port=settings.REDIS_PORT, db=0)
 
-loaded_model = lgb.Booster(model_file='lgbm_model.pkl')
+# loaded_model = joblib.load('lgbm_model.pkl')
+# loaded_model = lgb.Booster(model_file='lgbm_model.pkl') 
+# lgb.Booster(model_file='lgbm_model.pkl')
 
 
 # ======== LOAD ARTIFACTS ========
 # Use relative path to load the pickle model
-#MODEL_PATH = os.path.join(os.path.dirname(__file__), 'lgbm_model.pkl')
-#model = joblib.load(MODEL_PATH)
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'lgbm_model.pkl')
+model = joblib.load(MODEL_PATH)
 
+# (Optional) If you have top_features, scalers, etc.:
 # TOP_FEATURES_PATH = os.path.join(os.path.dirname(__file__), 'top_features.pkl')
 # top_features = joblib.load(TOP_FEATURES_PATH)
 
@@ -25,14 +29,28 @@ def predict(str):
     """
     Runs inference using the loaded model. Returns a dict with the prediction result.
     """
-    input_dict = json.loads(json_str)
+    # Convert input string to a dictionary
+    fields = json.loads(str)
+
+    def get_number(value):
+        try:
+            return float(value)
+        except ValueError:
+            return value
+
+    input_dict = { k: get_number(v) for k, v in fields.items()}
+
+    print(f"Input dict {type(input_dict)}: {input_dict}")
+
+    # Convert input_dict to a DataFrame
     X_df= pd.DataFrame([input_dict])
-    predictions = loaded_model.predict(X_df)
+
+    predictions = model.predict(X_df)
     # Example threshold of 0.3
-    y_prods = lgbm_model.predict_proba(X_df)[:, 1]
+    y_prods = model.predict_proba(X_df)[:, 1]
     y_pred = (y_prods > 0.3).astype(int) 
     return {
-        'prediction': y_pred,
+        'prediction': int(y_pred[0]),
         'probability': float(predictions[0])
     }
 
@@ -42,7 +60,7 @@ import json
 import time
 import settings
 import pandas as pd
-from your_ml_module import predict  # your predict() function
+# from your_ml_module import predict  # your predict() function
 # 'loaded_model' is presumably imported or accessible inside predict()
 
 def classify_process():
@@ -87,6 +105,8 @@ def classify_process():
 
         # 8. Sleep briefly before checking for next job
         time.sleep(settings.SERVER_SLEEP)
+
+
 
 
 if __name__ == '__main__':
