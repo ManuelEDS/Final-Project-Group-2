@@ -15,7 +15,7 @@ REM Backup de la base de datos..
 REM set DB=db_trading.bak
 REM pg_dump -U postgres -d trading -h localhost -F c -f .\%DB%
 
-%ZIP% a %FILE% . -xr!node_modules -xr!env*
+%ZIP% a %FILE% . -xr!node_modules -xr!env* -xr!values -xr!ui/H_MHAS_c2.dta
 
 set DEST="D:\Onedrive\Backups"
 
