@@ -13,4 +13,6 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY ./ /src/
 
 FROM base AS build
+
 CMD streamlit run --server.port 9090 hospital_classifier_app.py
+
