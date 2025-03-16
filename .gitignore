@@ -1,4 +1,5 @@
 ui/H_MHAS_c2.dta
-env/
-.env
+*.log
+node_modules/
 values/
+env/
