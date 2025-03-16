@@ -1,4 +1,4 @@
+ui/*.dta
 env/
 .env
-app Backend
 values/
