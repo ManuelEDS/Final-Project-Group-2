@@ -5,6 +5,9 @@ import streamlit as st
 from app.settings import API_BASE_URL
 from PIL import Image
 import random
+import pandas as pd
+import os
+import numpy as np
 
 ST_LOGIN = "Login"
 ST_REGISTER = "Register"
@@ -12,12 +15,15 @@ ST_TOKEN = "token"
 ST_RESTART = "restart"
 ST_ERROR = "error"
 ST_INITIALS = "initials"
+ST_DATA = "data"
 
 TYPE_INT = "int"
 TYPE_FLOAT = "float"
 TYPE_OPTIONS = "options"
 
-VERSION = "1.2"
+VERSION = "2.0"
+TEST = False
+
 
 def register(username: str, password: str, name: str) -> Optional[str]:
     """This function calls the register endpoint of the API to create a new user.
@@ -159,7 +165,83 @@ def check_state(state: str, remove: bool = False):
 
     return False
 
-def get_payload(fields: dict):
+def get_payload():
+    
+    """
+    fields = []
+    for i in range(50):
+         fields.append({ "id": str(i), "name": f"Field {i}", "type": TYPE_INT, "min": 0, "max": 500, 
+                            "value" : st.session_state[ST_INITIALS][i] })
+    """
+    
+    fields = [
+
+        { "id": "r4dadage", "name": "Age of the respondent's father", "type": TYPE_FLOAT } , 
+        { "id": "r4agey", "name": "Age of the respondent in years", "type": TYPE_FLOAT } , 
+        { "id": "r4momage", "name": "Age of the respondent's mother", "type": TYPE_FLOAT } , 
+        { "id": "r4wthh", "name": "Household weight", "type": TYPE_FLOAT } , 
+        { "id": "r4wtresp", "name": "Respondent weight", "type": TYPE_FLOAT } , 
+        { "id": "rafeduc_m", "name": "Father's education level", "type": TYPE_FLOAT } , 
+        { "id": "rameduc_m", "name": "Mother's education level", "type": TYPE_FLOAT } , 
+        { "id": "r4shlt", "name": "Self-reported health", "type": TYPE_FLOAT } , 
+        { "id": "r4sight", "name": "Vision problems", "type": TYPE_FLOAT } , 
+        { "id": "r4hearing", "name": "Hearing problems", "type": TYPE_FLOAT } , 
+        { "id": "r4hltc", "name": "Change in health compared to two years ago", "type": TYPE_FLOAT } , 
+        { "id": "r4painlv", "name": "Level of pain", "type": TYPE_FLOAT } , 
+        { "id": "r4cholst", "name": "Cholesterol level", "type": TYPE_FLOAT } , 
+        { "id": "r4arthre", "name": "Diagnosis of arthritis", "type": TYPE_FLOAT } , 
+        { "id": "r4respe", "name": "Diagnosis of respiratory diseases", "type": TYPE_FLOAT } , 
+        { "id": "r4vigact", "name": "Vigorous physical activity", "type": TYPE_FLOAT } , 
+        { "id": "r4wakeup", "name": "Difficulty waking up", "type": TYPE_FLOAT } , 
+        { "id": "r4joga", "name": "Practice of yoga", "type": TYPE_FLOAT } , 
+        { "id": "r4rxdiabi", "name": "Use of diabetes medication", "type": TYPE_FLOAT } , 
+        { "id": "r4rested", "name": "Feeling rested", "type": TYPE_FLOAT } , 
+        { "id": "r4wakent", "name": "Time taken to wake up", "type": TYPE_FLOAT } , 
+        { "id": "r4rxdiabo", "name": "Use of diabetes medication", "type": TYPE_FLOAT } , 
+        { "id": "r4stoopa", "name": "Difficulty stooping", "type": TYPE_FLOAT } , 
+        { "id": "r4sleepr", "name": "Sleep quality", "type": TYPE_FLOAT } , 
+        { "id": "r4doctim1y", "name": "Number of doctor visits in the last year", "type": TYPE_FLOAT } , 
+        { "id": "r4hosp1y", "name": "Number of hospitalizations in the last year", "type": TYPE_FLOAT } , 
+        { "id": "r4hspnit1y", "name": "Number of nights in the hospital in the last year", "type": TYPE_FLOAT } , 
+        { "id": "r4oopmd1y", "name": "Out-of-pocket medical expenses in the last year", "type": TYPE_FLOAT } , 
+        { "id": "r4dentim1y", "name": "Number of dentist visits in the last year", "type": TYPE_FLOAT } , 
+        { "id": "r4imrc8", "name": "Immediate recall score (8 items)", "type": TYPE_FLOAT } , 
+        { "id": "r4slfmem", "name": "Self-reported memory", "type": TYPE_FLOAT } , 
+        { "id": "r4verbf", "name": "Verbal fluency score", "type": TYPE_FLOAT } , 
+        { "id": "r4ser7", "name": "Score on the serial 7s test", "type": TYPE_FLOAT } , 
+        { "id": "r4tr16", "name": "Delayed recall score (16 items)", "type": TYPE_FLOAT } , 
+        { "id": "r4ipent", "name": "Total income from public pensions", "type": TYPE_FLOAT } , 
+        { "id": "r4tpamt", "name": "Total amount of private transfers received", "type": TYPE_FLOAT } , 
+        { "id": "r4iearn", "name": "Labor income", "type": TYPE_FLOAT } , 
+        { "id": "r4livsib", "name": "Number of living siblings", "type": TYPE_FLOAT } , 
+        { "id": "raevbrn", "name": "Number of children ever born", "type": TYPE_FLOAT } , 
+        { "id": "r4rfcntx_m", "name": "Frequency of contact with friends and relatives", "type": TYPE_FLOAT } , 
+        { "id": "r4decsib", "name": "Number of deceased siblings", "type": TYPE_FLOAT } , 
+        { "id": "r4igxfr", "name": "Intergenerational transfers", "type": TYPE_FLOAT } , 
+        { "id": "r4height", "name": "Height of the respondent", "type": TYPE_FLOAT } , 
+        { "id": "r4weight", "name": "Weight of the respondent", "type": TYPE_FLOAT } , 
+        { "id": "r4bmi", "name": "Body Mass Index (BMI)", "type": TYPE_FLOAT } , 
+        { "id": "r4vscan", "name": "Use of vascular scan", "type": TYPE_FLOAT } , 
+        { "id": "r4gcaresckd_m", "name": "Frequency of caring for a sick or disabled adult", "type": TYPE_FLOAT } , 
+        { "id": "r4lsatsc3", "name": "Life satisfaction", "type": TYPE_FLOAT } , 
+        { "id": "r4socact_m", "name": "Social activities", "type": TYPE_FLOAT } , 
+        { "id": "r4enlife", "name": "Satisfaction with life", "type": TYPE_FLOAT } , 
+    ]
+    
+    df = st.session_state[ST_DATA]
+
+    cats = [f["id"] for f in fields
+                if df[f["id"]].dtype.name == 'category']
+                
+    for id in cats:
+        field = next((item for item in fields if item['id'] == id), None)
+        unique_names = np.sort(df[id].dropna().unique()).tolist()
+        #df[id].dropna().unique().tolist()
+
+        field["type"] = TYPE_OPTIONS
+        field["options"] = unique_names
+        #field["value"] = unique_names[0]
+
 
     payload = {}
     with_error = False
@@ -170,9 +252,12 @@ def get_payload(fields: dict):
 
         field_error = False
 
+        #st.write(f"**{field}**")
+        
         if field["type"] == TYPE_OPTIONS:
             initial = field["value"] if "value" in field else ""
-            value = st.selectbox(field["name"], field["options"], value=initial)
+            default_index = field["options"].index(initial) if initial in field["options"] else 0
+            value = st.selectbox(field["name"], field["options"], index=default_index, key=field["id"])
 
         else:
         
@@ -235,12 +320,9 @@ def get_payload(fields: dict):
     st.session_state[ST_ERROR] = with_error
     return payload
 
-
-
 # Interfaz de usuario
 #st.set_page_config(page_title="Hospitalization Risks", page_icon="📷✈️")
 st.set_page_config(page_title="Hospitalization Risks", page_icon="🏥")
-
 
 st.markdown(
     f"<h1 style='text-align: center; color: #4B89DC;'>Hospitalization Risks</h1>",
@@ -254,6 +336,15 @@ if check_state(ST_RESTART):
     check_state(ST_ERROR, True)
     check_state(ST_INITIALS, True)
 
+#print("State token?", st.session_state[ST_TOKEN] if ST_TOKEN in st.session_state else "No token")
+
+if not ST_DATA in st.session_state:
+
+    st.write("Loading data...")
+    DATA = os.path.join(os.path.dirname(__file__), 'H_MHAS_c2.dta')
+
+    # Find categorical fields
+    st.session_state[ST_DATA] = pd.read_stata(DATA)
 
 
 # Create a placeholder
@@ -290,21 +381,28 @@ with placeholder.container():
             with col1:
 
                 if st.button("Login"):
+
                     token = login(username, password)
-                    if token:
-                        st.session_state.token = token
-                        st.success("Login successful!")
-                    else:
+
+                    if TEST:
+                        st.session_state.token = "Test"
+
+                    elif token is None:
                         st.error("Login failed. Please check your credentials.")
 
+                    else:
+                        st.session_state.token = token
+                        st.success("Login successful!")
+
             with col2:
+
                 if st.button(ST_REGISTER):
                     st.session_state[ST_REGISTER] = True
                     st.rerun()  # Reinicia la app
 
 #---------------------------------------------------------------------------------------------------------------
-if not check_state(ST_INITIALS):
-    st.session_state[ST_INITIALS] = [random.randint(0, 500) for _ in range(50)]
+#if not check_state(ST_INITIALS):
+#    st.session_state[ST_INITIALS] = [random.randint(0, 500) for _ in range(50)]
 
 if ST_TOKEN in st.session_state:
 
@@ -318,22 +416,7 @@ if ST_TOKEN in st.session_state:
     # prediction form
     st.markdown("## Prediction Form")
 
-    # d = { "0" : 12937 , "1" : 12938 .... "49" : 18877 }
-
-    
-    # fields = [
-    #    { "id": "hemoglobina", "name": "Hemoglobina", "type": TYPE_OPTIONS, "options": ["Si", "No"] },
-    #    { "id": "hematies", "name": "Hematies", "type": TYPE_INT },
-    #    { "id": "glucosa", "name": "Glucosa", "type": TYPE_INT, "min": 0, "max": 500 },
-    #]
-
-
-    fields = []
-    for i in range(50):
-         fields.append({ "id": str(i), "name": f"Field {i}", "type": TYPE_INT, "min": 0, "max": 500, 
-                            "value" : st.session_state[ST_INITIALS][i] })
-
-    payload = get_payload(fields)
+    payload = get_payload()
 
 
     col1, col2 = st.columns([1, 5])
@@ -348,6 +431,8 @@ if ST_TOKEN in st.session_state:
         if st.button("Re-start", key=ST_RESTART):
             pass
 
+
+    #st.write("Payload", payload)
 
     if response:
 

@@ -36,6 +36,10 @@ def predict(str):
         try:
             return float(value)
         except ValueError:
+
+            # Por ahora el modelo no banca strings..
+            return 0.0
+
             return value
 
     input_dict = { k: get_number(v) for k, v in fields.items()}
