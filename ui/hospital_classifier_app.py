@@ -227,20 +227,22 @@ def get_payload():
         { "id": "r4socact_m", "name": "Social activities", "type": TYPE_FLOAT } , 
         { "id": "r4enlife", "name": "Satisfaction with life", "type": TYPE_FLOAT } , 
     ]
-    
-    df = st.session_state[ST_DATA]
 
-    cats = [f["id"] for f in fields
-                if df[f["id"]].dtype.name == 'category']
-                
-    for id in cats:
-        field = next((item for item in fields if item['id'] == id), None)
-        unique_names = np.sort(df[id].dropna().unique()).tolist()
-        #df[id].dropna().unique().tolist()
+    if ST_DATA in st.session_state:
+        
+        df = st.session_state[ST_DATA]
 
-        field["type"] = TYPE_OPTIONS
-        field["options"] = unique_names
-        #field["value"] = unique_names[0]
+        cats = [f["id"] for f in fields
+                    if df[f["id"]].dtype.name == 'category']
+                    
+        for id in cats:
+            field = next((item for item in fields if item['id'] == id), None)
+            unique_names = np.sort(df[id].dropna().unique()).tolist()
+            #df[id].dropna().unique().tolist()
+
+            field["type"] = TYPE_OPTIONS
+            field["options"] = unique_names
+            #field["value"] = unique_names[0]
 
 
     payload = {}
@@ -280,7 +282,7 @@ def get_payload():
 
             message = f"Enter a number {message}"
 
-            value = st.text_input(field["name"], placeholder=message, value=initial)
+            value = st.text_input(field["name"], placeholder=message, value=initial, key=field["id"])
 
             if value:
 
@@ -340,11 +342,19 @@ if check_state(ST_RESTART):
 
 if not ST_DATA in st.session_state:
 
-    st.write("Loading data...")
-    DATA = os.path.join(os.path.dirname(__file__), 'H_MHAS_c2.dta')
+    try:
 
-    # Find categorical fields
-    st.session_state[ST_DATA] = pd.read_stata(DATA)
+        FILE = 'H_MHAS_c2.dta'
+        st.write(f"You need upload the file {FILE} to the ui folder...")
+        st.write("Loading data...")
+        DATA = os.path.join(os.path.dirname(__file__), FILE)
+
+        # Find categorical fields
+        st.session_state[ST_DATA] = pd.read_stata(DATA)
+
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
+
 
 
 # Create a placeholder
