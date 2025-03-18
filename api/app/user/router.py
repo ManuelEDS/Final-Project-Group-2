@@ -9,13 +9,11 @@ from . import schema, services, validator
 
 router = APIRouter(tags=["Users"], prefix="/user")
 
-
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user_registration(
     request: schema.User, database: Session = Depends(db.get_db)
+    #request: schema.User, database: Session = Depends(db.get_db)
 ):
-    print(f"Creating new user request {request}")
-
     # TODO: Implement the create_user_registration endpoint
     # Make sure to:
     #  1. Verify the user email doesn't already exist, see `verify_email_exist()` function under `validator.py`

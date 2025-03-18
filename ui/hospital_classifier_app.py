@@ -13,6 +13,7 @@ ST_LOGIN = "Login"
 ST_REGISTER = "Register"
 ST_TOKEN = "token"
 ST_RESTART = "restart"
+ST_RESTART_LOGIN = "restart_login"
 ST_ERROR = "error"
 ST_INITIALS = "initials"
 ST_DATA = "data"
@@ -45,32 +46,29 @@ def register(username: str, password: str, name: str) -> Optional[str]:
     #     `Content-Type: application/x-www-form-urlencoded`.
     headers = { 
         "accept" : "application/json",
-        "Content-Type" : "application/x-www-form-urlencoded" 
+        #"Content-Type" : "application/x-www-form-urlencoded" 
     }
 
     #  3. Prepare the data payload with fields: `grant_type`, `username`, `password`,
     #     `scope`, `client_id`, and `client_secret`.
     payload = { 
-        "grant_type": "",
-        "username": username,
+        "email": username,
         "password": password,
         "name": name,
-        "scope": "",
-        "client_id": "",
-        "client_secret": "",
     }
 
     #  4. Use `requests.post()` to send the API request with the URL, headers,
     #     and data payload.
 
     # TODO: Check the register API (MD) 
-    response = requests.post(url, headers=headers, data=payload)
+    response = requests.post(url, headers=headers, json=payload)
 
     #  5. Check if the response status code is `200`.
     #  6. If successful, go login and extract the token from the JSON response.
-    if response.status_code == 200:
+    if response.status_code == 201:
         token = login(username, password)
     else:
+        st.error("Response:", response.json())
         token = None
 
     return token
@@ -256,10 +254,12 @@ def get_payload():
 
         #st.write(f"**{field}**")
         
+        name = field["name"] + "?"
+
         if field["type"] == TYPE_OPTIONS:
             initial = field["value"] if "value" in field else ""
             default_index = field["options"].index(initial) if initial in field["options"] else 0
-            value = st.selectbox(field["name"], field["options"], index=default_index, key=field["id"])
+            value = st.selectbox(name, field["options"], index=default_index, key=field["id"])
 
         else:
         
@@ -282,14 +282,14 @@ def get_payload():
 
             message = f"Enter a number {message}"
 
-            value = st.text_input(field["name"], placeholder=message, value=initial, key=field["id"])
+            value = st.text_input(name, placeholder=message, value=initial, key=field["id"])
 
             if value:
 
                 try:
                     number = float(value)  # Convert input to a number
                     
-                    if field["type"] == "int" and not number.is_integer():
+                    if field["type"] == TYPE_INT and not number.is_integer():
                         message = "Enter a whole number"
                         field_error = True
 
@@ -333,17 +333,17 @@ st.markdown(
 
 st.write("Version ", VERSION)
 
-if check_state(ST_RESTART):
+if check_state(ST_RESTART) or check_state(ST_RESTART_LOGIN):
     check_state(ST_TOKEN, True)
     check_state(ST_ERROR, True)
     check_state(ST_INITIALS, True)
+    check_state(ST_REGISTER, True)
 
 #print("State token?", st.session_state[ST_TOKEN] if ST_TOKEN in st.session_state else "No token")
 
 if not ST_DATA in st.session_state:
 
     try:
-
         FILE = 'H_MHAS_c2.dta'
         st.write(f"You need upload the file {FILE} to the ui folder...")
         st.write("Loading data...")
@@ -364,6 +364,7 @@ with placeholder.container():
     # Formulario de login
     if not check_state(ST_TOKEN):
 
+
         if check_state(ST_REGISTER):
 
             st.markdown(f"## {ST_REGISTER}")
@@ -372,13 +373,21 @@ with placeholder.container():
             username = st.text_input("E-Mail")
             password = st.text_input("Password", type="password")
 
-            if st.button("Confirm"):
-                token = register(username, password, name)
-                if token:
-                    st.session_state.token = token
-                    st.success("Register successful!")
-                else:
-                    st.error("Register failed. Please check your credentials.")
+            col1, col2 = st.columns([1, 5])
+            with col1:
+
+                if st.button("Confirm"):
+                    token = register(username, password, name)
+                    if token:
+                        st.session_state.token = token      
+                        st.success("Register successful!")
+                    else:
+                        st.error("Register failed. Please check your credentials.")
+
+            with col2:
+                if st.button("Re-Start", key=ST_RESTART_LOGIN):
+                    pass
+
 
         else:
 
@@ -386,8 +395,7 @@ with placeholder.container():
             username = st.text_input("E-Mail", value="admin@example.com")
             password = st.text_input("Password", type="password", value="admin")
 
-            col1, col2 = st.columns(2)
-
+            col1, col2 = st.columns([1, 5])
             with col1:
 
                 if st.button("Login"):
@@ -438,7 +446,7 @@ if ST_TOKEN in st.session_state:
             response = predict(token, payload)
 
     with col2:
-        if st.button("Re-start", key=ST_RESTART):
+        if st.button("Re-Start", key=ST_RESTART):
             pass
 
 
