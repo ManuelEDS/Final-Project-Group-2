@@ -9,21 +9,11 @@ import pandas as pd
 import os
 import numpy as np
 
-ST_LOGIN = "Login"
-ST_REGISTER = "Register"
-ST_TOKEN = "token"
-ST_RESTART = "restart"
-ST_RESTART_LOGIN = "restart_login"
-ST_ERROR = "error"
-ST_INITIALS = "initials"
-ST_DATA = "data"
-
 TYPE_INT = "int"
 TYPE_FLOAT = "float"
 TYPE_OPTIONS = "options"
 
 VERSION = "2.0"
-TEST = False
 
 
 def register(username: str, password: str, name: str) -> Optional[str]:
@@ -37,6 +27,10 @@ def register(username: str, password: str, name: str) -> Optional[str]:
     Returns:
         Optional[str]: token if registration is successful, None otherwise
     """
+
+    if username == "" or password == "" or name == "":
+        st.error("Please fill in all fields.")
+        return
 
     # Steps to Build the `register` Function:
     #  1. Construct the API endpoint URL using `API_BASE_URL` and `/register`.
@@ -60,18 +54,43 @@ def register(username: str, password: str, name: str) -> Optional[str]:
     #  4. Use `requests.post()` to send the API request with the URL, headers,
     #     and data payload.
 
-    # TODO: Check the register API (MD) 
-    response = requests.post(url, headers=headers, json=payload)
 
-    #  5. Check if the response status code is `200`.
-    #  6. If successful, go login and extract the token from the JSON response.
-    if response.status_code == 201:
-        token = login(username, password)
-    else:
-        st.error("Response:", response.json())
-        token = None
+    token = None
+
+    try:
+        # TODO: Check the register API (MD) 
+        response = requests.post(url, headers=headers, json=payload)
+
+        #  5. Check if the response status code is `201`.
+        #  6. If successful, go login and extract the token from the JSON response.
+        if response.status_code == 201:
+            token = login(username, password)
+
+        else:
+
+            try:
+                # Check if "detail" is a list and extract the first message
+                detail = response.json().get("detail", "An error occurred.")
+                if isinstance(detail, list) and len(detail) > 0:
+                    error_message = detail[0].get("msg", "An error occurred.")
+                else:
+                    error_message = detail  # Use the detail directly if it's not a list
+
+            except json.JSONDecodeError:
+                error_message = "An error occurred, and the response could not be parsed."
+
+            st.error(f"Registration failed, {error_message}")
+
+    except requests.exceptions.ConnectionError:
+        st.error("Connection error. Please check..")
+
 
     return token
+
+
+
+
+
 
 def login(username: str, password: str) -> Optional[str]:
     """This function calls the login endpoint of the API to authenticate the user
@@ -84,6 +103,11 @@ def login(username: str, password: str) -> Optional[str]:
     Returns:
         Optional[str]: token if login is successful, None otherwise
     """
+
+    if username == "" or password == "":
+        st.error("Please fill in all fields.")
+        return
+
     # Steps to Build the `login` Function:
     #  1. Construct the API endpoint URL using `API_BASE_URL` and `/login`.
     url = f"{API_BASE_URL}/login"
@@ -109,17 +133,24 @@ def login(username: str, password: str) -> Optional[str]:
     #  4. Use `requests.post()` to send the API request with the URL, headers,
     #     and data payload.
 
-    # TODO: Check the login API (MD) 
-    response = requests.post(url, headers=headers, data=payload)
+    token = None
 
-    #  5. Check if the response status code is `200`.
-    #  6. If successful, extract the token from the JSON response.
-    #  7. Return the token if login is successful, otherwise return `None`.
-    #  8. Test the function with various inputs.
-    if response.status_code == 200:
-        token = response.json()["access_token"]
-    else:
-        token = None
+    try:
+        # TODO: Check the login API (MD) 
+        response = requests.post(url, headers=headers, data=payload)
+
+        #  5. Check if the response status code is `200`.
+        #  6. If successful, extract the token from the JSON response.
+        #  7. Return the token if login is successful, otherwise return `None`.
+        #  8. Test the function with various inputs.
+        if response.status_code == 200:
+            token = response.json()["access_token"]
+        else:
+            st.error("Login failed. Please check your credentials.")
+
+    except requests.exceptions.ConnectionError:
+        st.error("Connection error. Please check..")
+
 
     return token
 
@@ -148,7 +179,13 @@ def predict(token: str, form_data: dict) -> requests.Response:
     #  3. Make a POST request to the predict endpoint.
     # TODO: Check the predict API (MD) 
     url = f"{API_BASE_URL}/model/predict"
-    response = requests.post(url, headers=headers, json=form_data)
+
+    try:
+        response = requests.post(url, headers=headers, json=form_data)
+
+    except requests.exceptions.ConnectionError:
+        st.error("Connection error. Please check..")
+        return None
 
     #  4. Return the response.
     return response
@@ -333,11 +370,14 @@ st.markdown(
 
 st.write("Version ", VERSION)
 
-if check_state(ST_RESTART) or check_state(ST_RESTART_LOGIN):
+ST_TOKEN = "token"
+ST_RESTART = "restart"
+ST_ERROR = "error"
+ST_DATA = "data"
+
+if check_state(ST_RESTART):
     check_state(ST_TOKEN, True)
     check_state(ST_ERROR, True)
-    check_state(ST_INITIALS, True)
-    check_state(ST_REGISTER, True)
 
 #print("State token?", st.session_state[ST_TOKEN] if ST_TOKEN in st.session_state else "No token")
 
@@ -353,70 +393,54 @@ if not ST_DATA in st.session_state:
         st.session_state[ST_DATA] = pd.read_stata(DATA)
 
     except Exception as e:
-        st.error(f"Error loading data: {e}")
-
-
+        st.success(f"No data to load..")
 
 # Create a placeholder
 placeholder = st.empty()
+
+
 with placeholder.container():
 
-    # Formulario de login
-    if not check_state(ST_TOKEN):
+    col1, col2 = st.columns(2)
 
+    with col1:
 
-        if check_state(ST_REGISTER):
+        with st.form(key="login_form"):
+            st.markdown("## Login")
+            username = st.text_input("E-Mail")  # , value="admin@example.com")
+            password = st.text_input("Password", type="password")  # , value="admin")
 
-            st.markdown(f"## {ST_REGISTER}")
+            # Add a submit button for the login form
+            login_button = st.form_submit_button("Login")
+
+            if login_button:
+                token = login(username, password)
+
+                if token:
+                    st.session_state.token = token
+
+    with col2:
+
+        # Register Form
+        with st.form(key="register_form"):
+            st.markdown(f"## Register")
 
             name = st.text_input("Name")
             username = st.text_input("E-Mail")
             password = st.text_input("Password", type="password")
 
-            col1, col2 = st.columns([1, 5])
-            with col1:
+            # Add a submit button for the register form
+            register_button = st.form_submit_button("Register")
 
-                if st.button("Confirm"):
-                    token = register(username, password, name)
-                    if token:
-                        st.session_state.token = token      
-                        st.success("Register successful!")
-                    else:
-                        st.error("Register failed. Please check your credentials.")
+            if register_button:
+                token = register(username, password, name)
 
-            with col2:
-                if st.button("Re-Start", key=ST_RESTART_LOGIN):
-                    pass
+                if token:
+                    st.session_state.token = token
 
 
-        else:
 
-            st.markdown("## Login")
-            username = st.text_input("E-Mail", value="admin@example.com")
-            password = st.text_input("Password", type="password", value="admin")
 
-            col1, col2 = st.columns([1, 5])
-            with col1:
-
-                if st.button("Login"):
-
-                    token = login(username, password)
-
-                    if TEST:
-                        st.session_state.token = "Test"
-
-                    elif token is None:
-                        st.error("Login failed. Please check your credentials.")
-
-                    else:
-                        st.session_state.token = token
-                        st.success("Login successful!")
-
-            with col2:
-
-                if st.button(ST_REGISTER):
-                    st.session_state[ST_REGISTER] = True
-                    st.rerun()  # Reinicia la app
 
 #---------------------------------------------------------------------------------------------------------------
 #if not check_state(ST_INITIALS):
@@ -436,18 +460,14 @@ if ST_TOKEN in st.session_state:
 
     payload = get_payload()
 
-
-    col1, col2 = st.columns([1, 5])
     response = False
-    with col1:
 
-        # Predict button
-        if st.button("Predict"):
-            response = predict(token, payload)
+    # Predict button
+    if st.button("Predict"):
+        response = predict(token, payload)
 
-    with col2:
-        if st.button("Re-Start", key=ST_RESTART):
-            pass
+    if st.button("Re-Start", key=ST_RESTART):
+        pass
 
 
     #st.write("Payload", payload)

@@ -27,7 +27,6 @@ async def create_user_registration(
         )
 
     #  3. If the email doesn't exist, create a new user, see `new_user_register()` function under `services.py`
-
     new_user = await services.new_user_register(request, database)
 
     #  4. Return the new user object created
