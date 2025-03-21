@@ -29,9 +29,19 @@ def predict(str):
     """
     Runs inference using the loaded model. Returns a dict with the prediction result.
     """
+
+    print(f"Input str {type(str)}: {str}")
+
+    def get_number(value):
+        try:
+            return float(value)
+        
+        except ValueError:
+            return 0.0
+
     # Convert input string to a dictionary
     fields = json.loads(str)
-    values = { k: float(v) for k, v in fields.items()}
+    values = { k: get_number(v) for k, v in fields.items()}
     print(f"Input dict {type(values)}: {values}")
 
 
@@ -55,7 +65,7 @@ def predict(str):
         if key in scale_values:
             scale_values[key] = value
 
-
+    print(f"Input scaled {type(scale_values)}: {scale_values}")
 
     # Process the model----------------------------------------------------------
 
