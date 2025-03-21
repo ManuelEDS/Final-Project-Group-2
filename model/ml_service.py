@@ -1,27 +1,27 @@
 import os
 import json
-import joblib
 import redis
 import time
 import lightgbm as lgb
 from lightgbm import LGBMClassifier
 import settings
 
+import pandas as pd
+import numpy as np
+import joblib
+#import pickle
+import skopt
+
+
 db = redis.StrictRedis(host=settings.REDIS_IP, port=settings.REDIS_PORT, db=0)
 
-# loaded_model = joblib.load('lgbm_model.pkl')
-# loaded_model = lgb.Booster(model_file='lgbm_model.pkl') 
-# lgb.Booster(model_file='lgbm_model.pkl')
+SCALER = os.path.join(os.path.dirname(__file__), 'scaler.pkl')
+# Load the scaler from the pickle file
+with open(SCALER, "rb") as f:
+    scaler = pickle.load(f)
 
-
-# ======== LOAD ARTIFACTS ========
-# Use relative path to load the pickle model
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'lgbm_model.pkl')
-model = joblib.load(MODEL_PATH)
-
-# (Optional) If you have top_features, scalers, etc.:
-# TOP_FEATURES_PATH = os.path.join(os.path.dirname(__file__), 'top_features.pkl')
-# top_features = joblib.load(TOP_FEATURES_PATH)
+MODEL = os.path.join(os.path.dirname(__file__), 'variables_dict_m5_3_1.pkl')
+model = joblib.load(MODEL)
 
 
 # ======== PREDICTION FUNCTION ========
@@ -31,33 +31,47 @@ def predict(str):
     """
     # Convert input string to a dictionary
     fields = json.loads(str)
+    values = { k: float(v) for k, v in fields.items()}
+    print(f"Input dict {type(values)}: {values}")
 
-    def get_number(value):
-        try:
-            return float(value)
-        except ValueError:
 
-            # Por ahora el modelo no banca strings..
-            return 0.0
+    # Scale the input features----------------------------------------------------------
+    dict_scaler = {}
+    for i in scaler.feature_names_in_:
+        dict_scaler[i] = 0.0
 
-            return value
+    for key, value in values.items():
+        if key in dict_scaler:
+            dict_scaler[key] = value
 
-    input_dict = { k: get_number(v) for k, v in fields.items()}
+    df = pd.DataFrame(dict_scaler, index=[0])
+    transformed_data = scaler.transform(df)
 
-    print(f"Input dict {type(input_dict)}: {input_dict}")
+    # Convert the transformed data (NumPy array) back into a DataFrame
+    scale_data = pd.DataFrame(transformed_data, columns=df.columns).iloc[0].to_dict()
+    scale_values = values.copy()
+
+    for key, value in scale_data.items():
+        if key in scale_values:
+            scale_values[key] = value
+
+
+
+    # Process the model----------------------------------------------------------
 
     # Convert input_dict to a DataFrame
-    X_df= pd.DataFrame([input_dict])
+    X_df = pd.DataFrame([scale_values])
 
-    predictions = model.predict(X_df)
-    # Example threshold of 0.3
-    y_prods = model.predict_proba(X_df)[:, 1]
-    y_pred = (y_prods > 0.3).astype(int) 
+
+    predictions = model['best_model'].predict(X_df)
+    y_prods = model['best_model'].predict_proba(X_df)[:, 1]
+
+    y_pred = (y_prods > model['best_f1_threshold']).astype(int)
+
     return {
         'prediction': int(y_pred[0]),
-        'probability': float(predictions[0])
+        'probability': float(y_prods[0])
     }
-
 
 # ======== REDIS LISTENER (Optional) ========
 import json

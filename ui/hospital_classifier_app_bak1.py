@@ -12,7 +12,7 @@ import numpy as np
 TYPE_INT = "int"
 TYPE_FLOAT = "float"
 TYPE_OPTIONS = "options"
-TYPE_BINARY = "binary"
+TYPE_BINARY = "int"
 
 VERSION = "2.0"
 
@@ -202,57 +202,127 @@ def check_state(state: str, remove: bool = False):
     return False
 
 def get_payload():
-
-    """ { "id": "r4walk1", "name": "Difficulty walking one block", "type": TYPE_OPTIONS, "section": "B - Health" ,
-        "options": ["0.No", "1.Yes", "2.Can't Do", "9.Don't Do"],  }, """
+    
+    """
+    fields = []
+    for i in range(50):
+         fields.append({ "id": str(i), "name": f"Field {i}", "type": TYPE_INT, "min": 0, "max": 500, 
+                            "value" : st.session_state[ST_INITIALS][i] })
+    """
+    
 
     fields = [
-        { "id": "r4agey", "name": "Age of the respondent in years", "type": TYPE_INT, "values": (0, 120), "section": "A - Demographics, Identifiers, and Weights" },
+        { "id": "r4agey", "name": "Age of the respondent in years", "type": TYPE_FLOAT, "section": "A - Demographics, Identifiers, and Weights" },
         { "id": "r4rxdiab", "name": "Use of diabetes medication", "type": TYPE_BINARY, "section": "B - Health" },
-        { "id": "r4mobila", "name": "Mobility limitations (0-No limitations... 5-Total limitations)", "type": TYPE_INT, "values": (0, 5), "section": "B - Health"},
-        { "id": "r4nagi10", "name": "NAGI functional limitations (0-No limitations... 10-Total limitations)", "type": TYPE_INT, "values": (0, 10), "section": "B - Health" },
-        { "id": "r4cholst", "name": "High cholesterol level", "type": TYPE_BINARY, "section": "B - Health" },
+        { "id": "r4mobila", "name": "Mobility limitations", "type": TYPE_FLOAT, "section": "B - Health"},
+        { "id": "r4nagi10", "name": "Nagi functional limitations (10 items)", "type": TYPE_FLOAT, "section": "B - Health" },
+        { "id": "r4cholst", "name": "Cholesterol level", "type": TYPE_BINARY, "section": "B - Health" },
         { "id": "r4diabe", "name": "Diagnosis of diabetes", "type": TYPE_BINARY, "section": "B - Health" },
-        { "id": "r4walk1", "name": "Difficulty walking one block", "type": TYPE_BINARY, "section": "B - Health" },
+        { "id": "r4walk1", "name": "Difficulty walking one block", "type": TYPE_OPTIONS, "options": [], "section": "B - Health" },
         { "id": "r4arthre", "name": "Diagnosis of arthritis", "type": TYPE_BINARY, "section": "B - Health" },
-        { "id": "r4grossa", "name": "Gross motor skills limitations", "type": TYPE_BINARY, "section": "B - Health" },
-        { "id": "r4hosp1y", "name": "Hospital stay in the last year", "type": TYPE_BINARY, "section": "C - Health Care Utilization and Insurance" },
-        { "id": "r4doctim1y", "name": "Number of doctor visits in the last year", "type": TYPE_INT, "values": (0, 365), "section": "C - Health Care Utilization and Insurance" },
-        { "id": "r4hspnit1y", "name": "Number of nights in the hospital in the last year", "type": TYPE_INT, "values": (0, 365), 
-            "section": "C - Health Care Utilization and Insurance" }
+        { "id": "r4grossa", "name": "Gross motor skills limitations", "type": TYPE_FLOAT, "section": "B - Health" },
+        { "id": "r4hosp1y", "name": "Number of hospitalizations in the last year", "type": TYPE_BINARY, "section": "C - Health Care Utilization and Insurance" },
+        { "id": "r4doctim1y", "name": "Number of doctor visits in the last year", "type": TYPE_FLOAT, "section": "C - Health Care Utilization and Insurance" },
+        { "id": "r4hspnit1y", "name": "Number of nights in the hospital in the last year", "type": TYPE_FLOAT, "section": "C - Health Care Utilization and Insurance" }
     ]
+
+    """
+    fields = [
+
+        { "id": "r4dadage", "name": "Age of the respondent's father", "type": TYPE_FLOAT } , 
+        { "id": "r4agey", "name": "Age of the respondent in years", "type": TYPE_FLOAT } , 
+        { "id": "r4momage", "name": "Age of the respondent's mother", "type": TYPE_FLOAT } , 
+        { "id": "r4wthh", "name": "Household weight", "type": TYPE_FLOAT } , 
+        { "id": "r4wtresp", "name": "Respondent weight", "type": TYPE_FLOAT } , 
+        { "id": "rafeduc_m", "name": "Father's education level", "type": TYPE_FLOAT } , 
+        { "id": "rameduc_m", "name": "Mother's education level", "type": TYPE_FLOAT } , 
+        { "id": "r4shlt", "name": "Self-reported health", "type": TYPE_FLOAT } , 
+        { "id": "r4sight", "name": "Vision problems", "type": TYPE_FLOAT } , 
+        { "id": "r4hearing", "name": "Hearing problems", "type": TYPE_FLOAT } , 
+        { "id": "r4hltc", "name": "Change in health compared to two years ago", "type": TYPE_FLOAT } , 
+        { "id": "r4painlv", "name": "Level of pain", "type": TYPE_FLOAT } , 
+        { "id": "r4cholst", "name": "Cholesterol level", "type": TYPE_FLOAT } , 
+        { "id": "r4arthre", "name": "Diagnosis of arthritis", "type": TYPE_FLOAT } , 
+        { "id": "r4respe", "name": "Diagnosis of respiratory diseases", "type": TYPE_FLOAT } , 
+        { "id": "r4vigact", "name": "Vigorous physical activity", "type": TYPE_FLOAT } , 
+        { "id": "r4wakeup", "name": "Difficulty waking up", "type": TYPE_FLOAT } , 
+        { "id": "r4joga", "name": "Practice of yoga", "type": TYPE_FLOAT } , 
+        { "id": "r4rxdiabi", "name": "Use of diabetes medication", "type": TYPE_FLOAT } , 
+        { "id": "r4rested", "name": "Feeling rested", "type": TYPE_FLOAT } , 
+        { "id": "r4wakent", "name": "Time taken to wake up", "type": TYPE_FLOAT } , 
+        { "id": "r4rxdiabo", "name": "Use of diabetes medication", "type": TYPE_FLOAT } , 
+        { "id": "r4stoopa", "name": "Difficulty stooping", "type": TYPE_FLOAT } , 
+        { "id": "r4sleepr", "name": "Sleep quality", "type": TYPE_FLOAT } , 
+        { "id": "r4doctim1y", "name": "Number of doctor visits in the last year", "type": TYPE_FLOAT } , 
+        { "id": "r4hosp1y", "name": "Number of hospitalizations in the last year", "type": TYPE_FLOAT } , 
+        { "id": "r4hspnit1y", "name": "Number of nights in the hospital in the last year", "type": TYPE_FLOAT } , 
+        { "id": "r4oopmd1y", "name": "Out-of-pocket medical expenses in the last year", "type": TYPE_FLOAT } , 
+        { "id": "r4dentim1y", "name": "Number of dentist visits in the last year", "type": TYPE_FLOAT } , 
+        { "id": "r4imrc8", "name": "Immediate recall score (8 items)", "type": TYPE_FLOAT } , 
+        { "id": "r4slfmem", "name": "Self-reported memory", "type": TYPE_FLOAT } , 
+        { "id": "r4verbf", "name": "Verbal fluency score", "type": TYPE_FLOAT } , 
+        { "id": "r4ser7", "name": "Score on the serial 7s test", "type": TYPE_FLOAT } , 
+        { "id": "r4tr16", "name": "Delayed recall score (16 items)", "type": TYPE_FLOAT } , 
+        { "id": "r4ipent", "name": "Total income from public pensions", "type": TYPE_FLOAT } , 
+        { "id": "r4tpamt", "name": "Total amount of private transfers received", "type": TYPE_FLOAT } , 
+        { "id": "r4iearn", "name": "Labor income", "type": TYPE_FLOAT } , 
+        { "id": "r4livsib", "name": "Number of living siblings", "type": TYPE_FLOAT } , 
+        { "id": "raevbrn", "name": "Number of children ever born", "type": TYPE_FLOAT } , 
+        { "id": "r4rfcntx_m", "name": "Frequency of contact with friends and relatives", "type": TYPE_FLOAT } , 
+        { "id": "r4decsib", "name": "Number of deceased siblings", "type": TYPE_FLOAT } , 
+        { "id": "r4igxfr", "name": "Intergenerational transfers", "type": TYPE_FLOAT } , 
+        { "id": "r4height", "name": "Height of the respondent", "type": TYPE_FLOAT } , 
+        { "id": "r4weight", "name": "Weight of the respondent", "type": TYPE_FLOAT } , 
+        { "id": "r4bmi", "name": "Body Mass Index (BMI)", "type": TYPE_FLOAT } , 
+        { "id": "r4vscan", "name": "Use of vascular scan", "type": TYPE_FLOAT } , 
+        { "id": "r4gcaresckd_m", "name": "Frequency of caring for a sick or disabled adult", "type": TYPE_FLOAT } , 
+        { "id": "r4lsatsc3", "name": "Life satisfaction", "type": TYPE_FLOAT } , 
+        { "id": "r4socact_m", "name": "Social activities", "type": TYPE_FLOAT } , 
+        { "id": "r4enlife", "name": "Satisfaction with life", "type": TYPE_FLOAT } , 
+    ]
+    """
+
+    if ST_DATA in st.session_state:
+        
+        df = st.session_state[ST_DATA]
+
+        cats = [f["id"] for f in fields
+                    if df[f["id"]].dtype.name == 'category']
+                    
+        for id in cats:
+            field = next((item for item in fields if item['id'] == id), None)
+            unique_names = np.sort(df[id].dropna().unique()).tolist()
+            #df[id].dropna().unique().tolist()
+
+            field["type"] = TYPE_OPTIONS
+            field["options"] = unique_names
+            #field["value"] = unique_names[0]
+
 
     payload = {}
     with_error = False
+
+    #print("State In", st.session_state)
 
     for field in fields:
 
         field_error = False
 
-        id = field["id"]
-
-        if id == "r4agey" or id == "r4rxdiab" or id == "r4hosp1y":
-            st.markdown(f"### {field['section']}")
+        #st.write(f"**{field}**")
         
-        #name = field["name"] + f" [{id}]" + "?"
         name = field["name"] + "?"
 
-        if field["type"] == TYPE_BINARY:
-            checked = st.checkbox(name, value=False, key=id)
-            value = 1 if checked else 0
-
-        elif field["type"] == TYPE_OPTIONS:
+        if field["type"] == TYPE_OPTIONS:
             initial = field["value"] if "value" in field else ""
             default_index = field["options"].index(initial) if initial in field["options"] else 0
-            value = st.selectbox(name, field["options"], index=default_index, key=id)
+            value = st.selectbox(name, field["options"], index=default_index, key=field["id"])
 
         else:
         
-            initial = field["value"] if "value" in field else ""
+            initial = field["value"] if "value" in field else 0
 
-            min, max = None, None
-            if "values" in field:
-                min, max = field["values"]
+            min = field["min"] if "min" in field else None
+            max = field["max"] if "max" in field else None
 
             if min != None and max != None:
                 message = f"between {min} and {max}"
@@ -268,7 +338,7 @@ def get_payload():
 
             message = f"Enter a number {message}"
 
-            value = st.text_input(name, placeholder=message, value=initial, key=id)
+            value = st.text_input(name, placeholder=message, value=initial, key=field["id"])
 
             if value:
 
@@ -298,7 +368,7 @@ def get_payload():
                 message = "Enter a valid number"
                 field_error = True
 
-        payload[id] = value
+        payload[field["id"]] = value
 
         if field_error:
             st.error(f"{field['name']}: {message}!")
@@ -330,8 +400,24 @@ if check_state(ST_RESTART):
 
 #print("State token?", st.session_state[ST_TOKEN] if ST_TOKEN in st.session_state else "No token")
 
+if not ST_DATA in st.session_state:
+
+    try:
+        FILE = 'H_MHAS_c2.dta'
+        st.write(f"You need upload the file {FILE} to the ui folder...")
+        st.write("Loading data...")
+        DATA = os.path.join(os.path.dirname(__file__), FILE)
+
+        # Find categorical fields
+        st.session_state[ST_DATA] = pd.read_stata(DATA)
+
+    except Exception as e:
+        st.success(f"No data to load..")
+
 # Create a placeholder
 placeholder = st.empty()
+
+
 with placeholder.container():
 
     col1, col2 = st.columns(2)
@@ -340,8 +426,8 @@ with placeholder.container():
 
         with st.form(key="login_form"):
             st.markdown("## Login")
-            username = st.text_input("E-Mail") #, value="admin@example.com")
-            password = st.text_input("Password", type="password") #, value="admin")
+            username = st.text_input("E-Mail")  # , value="admin@example.com")
+            password = st.text_input("Password", type="password")  # , value="admin")
 
             # Add a submit button for the login form
             login_button = st.form_submit_button("Login")
