@@ -14,7 +14,7 @@ TYPE_FLOAT = "float"
 TYPE_OPTIONS = "options"
 TYPE_BINARY = "binary"
 
-VERSION = "2.0"
+VERSION = "2.0.1"
 
 
 def register(username: str, password: str, name: str) -> Optional[str]:
