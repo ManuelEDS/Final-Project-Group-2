@@ -29,6 +29,7 @@ def register(username: str, password: str, name: str) -> Optional[str]:
         Optional[str]: token if registration is successful, None otherwise
     """
 
+    # Check if any of the fields are empty
     if username == "" or password == "" or name == "":
         st.error("Please fill in all fields.")
         return
@@ -54,8 +55,6 @@ def register(username: str, password: str, name: str) -> Optional[str]:
 
     #  4. Use `requests.post()` to send the API request with the URL, headers,
     #     and data payload.
-
-
     token = None
 
     try:
@@ -77,19 +76,18 @@ def register(username: str, password: str, name: str) -> Optional[str]:
                 else:
                     error_message = detail  # Use the detail directly if it's not a list
 
+            # If the response is not JSON, catch the exception and use the response text
             except json.JSONDecodeError:
                 error_message = "An error occurred, and the response could not be parsed."
 
+            # Display the error message
             st.error(f"Registration failed, {error_message}")
 
+    # Connection error
     except requests.exceptions.ConnectionError:
         st.error("Connection error. Please check..")
 
-
     return token
-
-
-
 
 
 
@@ -149,6 +147,7 @@ def login(username: str, password: str) -> Optional[str]:
         else:
             st.error("Login failed. Please check your credentials.")
 
+    # Connection error
     except requests.exceptions.ConnectionError:
         st.error("Connection error. Please check..")
 
@@ -182,8 +181,10 @@ def predict(token: str, form_data: dict) -> requests.Response:
     url = f"{API_BASE_URL}/model/predict"
 
     try:
+        # Predict the hospitalization risk
         response = requests.post(url, headers=headers, json=form_data)
 
+    # Connection error
     except requests.exceptions.ConnectionError:
         st.error("Connection error. Please check..")
         return None
@@ -193,6 +194,7 @@ def predict(token: str, form_data: dict) -> requests.Response:
 
 def check_state(state: str, remove: bool = False):
 
+    # Check if the state exists or delete
     if state in st.session_state:
         value = st.session_state[state]
         if remove: del st.session_state[state]
@@ -203,11 +205,9 @@ def check_state(state: str, remove: bool = False):
 
 def get_payload():
 
-    """ { "id": "r4walk1", "name": "Difficulty walking one block", "type": TYPE_OPTIONS, "section": "B - Health" ,
-        "options": ["0.No", "1.Yes", "2.Can't Do", "9.Don't Do"],  }, """
-
+    # Prepare the fields for the form
     fields = [
-        { "id": "r4agey", "name": "Age of the respondent in years", "type": TYPE_INT, "values": (0, 120), "section": "A - Demographics, Identifiers, and Weights" },
+        { "id": "r4agey", "name": "Age of the respondent in years", "type": TYPE_INT, "values": (50, 120), "section": "A - Demographics, Identifiers, and Weights" },
         { "id": "r4rxdiab", "name": "Use of diabetes medication", "type": TYPE_BINARY, "section": "B - Health" },
         { "id": "r4mobila", "name": "Mobility limitations (0-No limitations... 5-Total limitations)", "type": TYPE_INT, "values": (0, 5), "section": "B - Health"},
         { "id": "r4nagi10", "name": "NAGI functional limitations (0-No limitations... 10-Total limitations)", "type": TYPE_INT, "values": (0, 10), "section": "B - Health" },
@@ -225,31 +225,36 @@ def get_payload():
     payload = {}
     with_error = False
 
+    # for each field in the form, depending of the type, show the input
     for field in fields:
 
         field_error = False
 
         id = field["id"]
 
+        # Show the section title
         if id == "r4agey" or id == "r4rxdiab" or id == "r4hosp1y":
             st.markdown(f"### {field['section']}")
         
-        #name = field["name"] + f" [{id}]" + "?"
         name = field["name"] + "?"
 
+        # Show the binary input field
         if field["type"] == TYPE_BINARY:
             checked = st.checkbox(name, value=False, key=id)
             value = 1 if checked else 0
 
+        # Show the options input field
         elif field["type"] == TYPE_OPTIONS:
             initial = field["value"] if "value" in field else ""
             default_index = field["options"].index(initial) if initial in field["options"] else 0
             value = st.selectbox(name, field["options"], index=default_index, key=id)
 
+        # Show the integer / float input field
         else:
         
-            initial = field["value"] if "value" in field else ""
+            initial = field["value"] if "value" in field else "0"
 
+            # Check if the field has a range to validate
             min, max = None, None
             if "values" in field:
                 min, max = field["values"]
@@ -268,8 +273,10 @@ def get_payload():
 
             message = f"Enter a number {message}"
 
+            # Show the input field
             value = st.text_input(name, placeholder=message, value=initial, key=id)
 
+            # Validate the numeric input field
             if value:
 
                 try:
@@ -324,20 +331,21 @@ ST_RESTART = "restart"
 ST_ERROR = "error"
 ST_DATA = "data"
 
+# if restart, delete the token and the error
 if check_state(ST_RESTART):
     check_state(ST_TOKEN, True)
     check_state(ST_ERROR, True)
-
-#print("State token?", st.session_state[ST_TOKEN] if ST_TOKEN in st.session_state else "No token")
 
 # Create a placeholder
 placeholder = st.empty()
 with placeholder.container():
 
+    # Create two columns for the login and register forms
     col1, col2 = st.columns(2)
 
     with col1:
 
+        # Login Form
         with st.form(key="login_form"):
             st.markdown("## Login")
             username = st.text_input("E-Mail") #, value="admin@example.com")
@@ -375,10 +383,7 @@ with placeholder.container():
 
 
 
-#---------------------------------------------------------------------------------------------------------------
-#if not check_state(ST_INITIALS):
-#    st.session_state[ST_INITIALS] = [random.randint(0, 500) for _ in range(50)]
-
+# Check if the user is logged in
 if ST_TOKEN in st.session_state:
 
     placeholder.empty()  # Clear the placeholder
@@ -396,21 +401,31 @@ if ST_TOKEN in st.session_state:
     response = False
 
     # Predict button
-    if st.button("Predict"):
+    if st.button("Predict", disabled=check_state(ST_ERROR)):
         response = predict(token, payload)
 
     if st.button("Re-Start", key=ST_RESTART):
         pass
 
-
-    #st.write("Payload", payload)
-
     if response:
 
+        # Check if the response is successful, show the prediction
         if response.status_code == 200:
             result = response.json()
-            st.write(f"**Prediction:** {result['prediction']}") 
-            st.write(f"**Score:** {format(result['score'], '.2f')}") 
+
+            #data = f"Prediction: {result['prediction']} <br> Score: {format(result['score'], '.2f')}"  
+            #background = "#c8fb8a" if float(result['prediction'])<1 else "#fbde8a"
+
+            score = f"{format(result['score']*100, '.0f')}%"
+
+            if float(result['prediction'])<1:
+                st.success(f"Probability: {score}, low chances of being hospitalized")
+
+            else:
+                st.error(f"Probability: {score}, high chances of being hospitalized!")
+
+            #st.write(f"Prediction: {result['prediction']}") 
+            #st.write(f"Score: {format(result['score'], '.2f')}") 
             st.session_state.classification_done = True
             st.session_state.result = result
         else:

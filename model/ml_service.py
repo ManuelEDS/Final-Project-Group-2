@@ -15,11 +15,12 @@ import skopt
 
 db = redis.StrictRedis(host=settings.REDIS_IP, port=settings.REDIS_PORT, db=0)
 
-SCALER = os.path.join(os.path.dirname(__file__), 'scaler.pkl')
 # Load the scaler from the pickle file
+SCALER = os.path.join(os.path.dirname(__file__), 'scaler.pkl')
 with open(SCALER, "rb") as f:
     scaler = pickle.load(f)
 
+# Load the LightGBM model from the pickle file
 MODEL = os.path.join(os.path.dirname(__file__), 'variables_dict_m5_3_1.pkl')
 model = joblib.load(MODEL)
 
@@ -42,42 +43,48 @@ def predict(str):
     # Convert input string to a dictionary
     fields = json.loads(str)
     values = { k: get_number(v) for k, v in fields.items()}
-    print(f"Input dict {type(values)}: {values}")
 
+    # ----------------------------------------------------------
+    # Scale the input features
 
-    # Scale the input features----------------------------------------------------------
+    # Inicialize the scaler dictionary with zeros
     dict_scaler = {}
     for i in scaler.feature_names_in_:
         dict_scaler[i] = 0.0
 
+    # Update the scaler dictionary with the input values
     for key, value in values.items():
         if key in dict_scaler:
             dict_scaler[key] = value
 
+    # Convert the dictionary to a DataFrame
     df = pd.DataFrame(dict_scaler, index=[0])
+
+    # Scale the input features
     transformed_data = scaler.transform(df)
 
     # Convert the transformed data (NumPy array) back into a DataFrame
     scale_data = pd.DataFrame(transformed_data, columns=df.columns).iloc[0].to_dict()
     scale_values = values.copy()
 
+    # Update the input values with the scaled values
     for key, value in scale_data.items():
         if key in scale_values:
             scale_values[key] = value
 
-    print(f"Input scaled {type(scale_values)}: {scale_values}")
-
-    # Process the model----------------------------------------------------------
+    # ----------------------------------------------------------
+    # Process the model
 
     # Convert input_dict to a DataFrame
     X_df = pd.DataFrame([scale_values])
 
-
+    # Get the predictions
     predictions = model['best_model'].predict(X_df)
     y_prods = model['best_model'].predict_proba(X_df)[:, 1]
 
     y_pred = (y_prods > model['best_f1_threshold']).astype(int)
 
+    # Get the prediction and probability
     return {
         'prediction': int(y_pred[0]),
         'probability': float(y_prods[0])
